@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעבר למילים: איך בינה מלאכותית חושפת תובנות מהמידע</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: all 0.3s ease;
+        }
+
+        /* Main Canvas Container */
+        .universe-canvas {
+            width: 500vw;
+            height: 500vh;
+            position: absolute;
+            background: radial-gradient(ellipse at center, #0a0033 0%, #000 100%);
+            transition: transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        /* Stars Background */
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* Navigation Dots */
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: scale(1.5);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+        }
+
+        /* Station Base Style */
+        .station {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 1s ease;
+        }
+
+        .station.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Station 1: Opening */
+        .station-1 {
+            top: 250vh;
+            left: 250vw;
+        }
+
+        .opening-container {
+            text-align: center;
+            position: relative;
+        }
+
+        .morphing-text {
+            font-size: 8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #667eea 100%);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-shift 3s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .subtitle-animated {
+            font-size: 2rem;
+            margin-top: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 1s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Station 2: Historical Journey */
+        .station-2 {
+            top: 150vh;
+            left: 400vw;
+        }
+
+        .timeline-container {
+            position: relative;
+            width: 80vw;
+            height: 60vh;
+        }
+
+        .era-card {
+            position: absolute;
+            width: 300px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .era-card:hover {
+            transform: translateY(-20px) scale(1.05);
+            box-shadow: 0 30px 60px rgba(138, 43, 226, 0.4);
+        }
+
+        .era-1 { top: 10%; left: 5%; background: linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(205, 133, 63, 0.3)); }
+        .era-2 { top: 20%; left: 30%; background: linear-gradient(135deg, rgba(38, 50, 56, 0.3), rgba(84, 110, 122, 0.3)); }
+        .era-3 { top: 10%; left: 55%; background: linear-gradient(135deg, rgba(13, 71, 161, 0.3), rgba(66, 165, 245, 0.3)); }
+        .era-4 { top: 20%; left: 80%; background: linear-gradient(135deg, rgba(74, 20, 140, 0.3), rgba(171, 71, 188, 0.3)); }
+
+        /* Station 3: AI Tools */
+        .station-3 {
+            top: 350vh;
+            left: 100vw;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3rem;
+            max-width: 80vw;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            padding: 3rem;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--tool-color) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: -1;
+        }
+
+        .tool-card:hover::before {
+            opacity: 0.3;
+        }
+
+        .tool-1 { --tool-color: #FF006E; border-color: #FF006E; }
+        .tool-2 { --tool-color: #8338EC; border-color: #8338EC; }
+        .tool-3 { --tool-color: #3A86FF; border-color: #3A86FF; }
+        .tool-4 { --tool-color: #06FFA5; border-color: #06FFA5; }
+
+        .tool-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        /* Station 4: Conclusion */
+        .station-4 {
+            top: 50vh;
+            left: 350vw;
+        }
+
+        .conclusion-container {
+            text-align: center;
+            max-width: 80vw;
+        }
+
+        .final-message {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FF006E 0%, #8338EC 25%, #3A86FF 50%, #06FFA5 75%, #FFB700 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-flow 4s ease infinite;
+            margin-bottom: 3rem;
+        }
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 3rem;
+        }
+
+        .cta-button {
+            padding: 1.5rem 3rem;
+            background: linear-gradient(135deg, var(--btn-color1) 0%, var(--btn-color2) 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-1 { --btn-color1: #FF006E; --btn-color2: #8338EC; }
+        .btn-2 { --btn-color1: #3A86FF; --btn-color2: #06FFA5; }
+        .btn-3 { --btn-color1: #FFB700; --btn-color2: #FF006E; }
+
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .particle-1 {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float-1 20s infinite ease-in-out;
+        }
+
+        @keyframes float-1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(100px, -100px) scale(1.2); }
+            66% { transform: translate(-100px, 100px) scale(0.8); }
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Speaker Info */
+        .speaker-info {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .speaker-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .morphing-text { font-size: 4rem; }
+            .tools-grid { grid-template-columns: 1fr; }
+            .era-card { width: 200px; height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Stars Background -->
+    <div class="stars" id="stars"></div>
+
+    <!-- Main Canvas -->
+    <div class="universe-canvas" id="canvas">
+        
+        <!-- Station 1: Opening -->
+        <div class="station station-1 active" data-station="1">
+            <div class="opening-container">
+                <h1 class="morphing-text" id="morphText">מידע</h1>
+                <p class="subtitle-animated">איך בינה מלאכותית חושפת תובנות מהמידע</p>
+                <div class="particle particle-1" style="top: -50px; left: -50px;"></div>
+                <div class="particle particle-1" style="bottom: -50px; right: -50px;"></div>
+            </div>
+        </div>
+
+        <!-- Station 2: Historical Journey -->
+        <div class="station station-2" data-station="2">
+            <div class="timeline-container">
+                <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem;">המסע ההיסטורי של המידע</h2>
+                
+                <div class="era-card era-1">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎨</div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">עידן היצירתיות הקדומה</h3>
+                    <p>קיפו האינקית, כתב חרתומים, ציורי מערות - המידע חי בצורות, צבעים וסמלים</p>
+                </div>
+                
+                <div class="era-card era-2">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📜</div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">עידן המילה הכתובה</h3>
+                    <p>גוטנברג והדפוס - סטנדרטיזציה של מידע, נגישות רחבה אך אובדן היצירתיות</p>
+                </div>
+                
+                <div class="era-card era-3">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">💻</div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">העידן הדיגיטלי</h3>
+                    <p>מחשבים ואינטרנט - אותו מידע טקסטואלי, רק על מסכים</p>
+                </div>
+                
+                <div class="era-card era-4">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🤖</div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">מהפכת ה-AI</h3>
+                    <p>חזרה ליצירתיות עם כוח על - מידע הופך לכל דבר שנחלום עליו</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Station 3: AI Tools -->
+        <div class="station station-3" data-station="3">
+            <div class="tools-container">
+                <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem;">הכלים שמשנים הכל</h2>
+                
+                <div class="tools-grid">
+                    <div class="tool-card tool-1">
+                        <div class="tool-icon">🎙️</div>
+                        <h3 class="tool-title">NotebookLM</h3>
+                        <p>הופך מסמכים לפודקאסטים מרתקים - שני מנחים וירטואליים מנתחים ודנים בתוכן שלך</p>
+                    </div>
+                    
+                    <div class="tool-card tool-2">
+                        <div class="tool-icon">📊</div>
+                        <h3 class="tool-title">Flourish</h3>
+                        <p>נתונים הופכים לסיפורים חיים - ויזואליזציות אינטראקטיביות שמזמינות חקירה</p>
+                    </div>
+                    
+                    <div class="tool-card tool-3">
+                        <div class="tool-icon">✨</div>
+                        <h3 class="tool-title">Claude Artifacts</h3>
+                        <p>יוצר תוכן אינטראקטיבי בזמן אמת - משחקים, סימולטורים וכלי עבודה</p>
+                    </div>
+                    
+                    <div class="tool-card tool-4">
+                        <div class="tool-icon">🔍</div>
+                        <h3 class="tool-title">GenSpark</h3>
+                        <p>חיפוש הופך לחוויה ויזואלית - דפי נחיתה מותאמים אישית לכל שאילתה</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Station 4: Conclusion -->
+        <div class="station station-4" data-station="4">
+            <div class="conclusion-container">
+                <h2 class="final-message">המידע תמיד היה כוח.<br>עכשיו יש לנו את הכוח להפוך אותו לכל דבר.</h2>
+                
+                <p style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.8);">
+                    אתם לא רק שומרי מידע - אתם אדריכלי חוויות מידע.<br>
+                    הזמן להוביל את המהפכה בארגונים שלכם.
+                </p>
+                
+                <div class="cta-buttons">
+                    <button class="cta-button btn-1">התחילו קטן</button>
+                    <button class="cta-button btn-2">חקרו וגלו</button>
+                    <button class="cta-button btn-3">הובילו שינוי</button>
+                </div>
+                
+                <p style="font-size: 2rem; margin-top: 4rem; font-weight: 900;">
+                    השאלה היא: מה תבחרו ליצור? 🚀
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+        <div class="nav-dot active" data-target="1"></div>
+        <div class="nav-dot" data-target="2"></div>
+        <div class="nav-dot" data-target="3"></div>
+        <div class="nav-dot" data-target="4"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="control-btn" id="prevBtn">←</button>
+        <button class="control-btn" id="nextBtn">→</button>
+        <button class="control-btn" id="fullscreenBtn">⛶</button>
+    </div>
+
+    <!-- Speaker Info -->
+    <div class="speaker-info">
+        <div class="speaker-name">הנרי שטאובר</div>
+        <div>יוצר תוכן ויועץ בבינה מלאכותית</div>
+    </div>
+
+    <script>
+        // Initialize
+        let currentStation = 1;
+        const totalStations = 4;
+        const canvas = document.getElementById('canvas');
+        
+        // Create stars
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // Custom cursor
+        const cursor = document.querySelector('.cursor');
+        const follower = document.querySelector('.cursor-follower');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            
+            setTimeout(() => {
+                follower.style.left = e.clientX - 20 + 'px';
+                follower.style.top = e.clientY - 20 + 'px';
+            }, 100);
+        });
+
+        // Morphing text animation
+        const morphText = document.getElementById('morphText');
+        const words = ['מידע', 'נתונים', 'סיפור', 'חוויה'];
+        let wordIndex = 0;
+        
+        setInterval(() => {
+            wordIndex = (wordIndex + 1) % words.length;
+            gsap.to(morphText, {
+                opacity: 0,
+                duration: 0.5,
+                onComplete: () => {
+                    morphText.textContent = words[wordIndex];
+                    gsap.to(morphText, { opacity: 1, duration: 0.5 });
+                }
+            });
+        }, 3000);
+
+        // Navigation function
+        function navigateToStation(stationNumber) {
+            if (stationNumber < 1 || stationNumber > totalStations) return;
+            
+            currentStation = stationNumber;
+            
+            // Update active states
+            document.querySelectorAll('.station').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.station-${stationNumber}`).classList.add('active');
+            
+            document.querySelectorAll('.nav-dot').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.nav-dot')[stationNumber - 1].classList.add('active');
+            
+            // Calculate position
+            const positions = {
+                1: { x: -250, y: -250 }, // Station 1 at center
+                2: { x: -400, y: -150 }, // Station 2
+                3: { x: -100, y: -350 }, // Station 3
+                4: { x: -350, y: -50 }   // Station 4
+            };
+            
+            const pos = positions[stationNumber];
+            canvas.style.transform = `translate(${pos.x}vw, ${pos.y}vh)`;
+        }
+
+        // Navigation dots
+        document.querySelectorAll('.nav-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const target = parseInt(dot.dataset.target);
+                navigateToStation(target);
+            });
+        });
+
+        // Control buttons
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentStation > 1) navigateToStation(currentStation - 1);
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentStation < totalStations) navigateToStation(currentStation + 1);
+        });
+
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && currentStation > 1) {
+                navigateToStation(currentStation - 1);
+            } else if (e.key === 'ArrowRight' && currentStation < totalStations) {
+                navigateToStation(currentStation + 1);
+            } else if (e.key === 'Escape' && document.fullscreenElement) {
+                document.exitFullscreen();
+            } else if (e.key >= '1' && e.key <= '4') {
+                navigateToStation(parseInt(e.key));
+            }
+        });
+
+        // Mouse wheel navigation
+        let isScrolling = false;
+        document.addEventListener('wheel', (e) => {
+            if (isScrolling) return;
+            isScrolling = true;
+            
+            if (e.deltaY > 0 && currentStation < totalStations) {
+                navigateToStation(currentStation + 1);
+            } else if (e.deltaY < 0 && currentStation > 1) {
+                navigateToStation(currentStation - 1);
+            }
+            
+            setTimeout(() => { isScrolling = false; }, 1000);
+        });
+
+        // Touch navigation for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 50 && currentStation < totalStations) {
+                    navigateToStation(currentStation + 1);
+                } else if (diffX < -50 && currentStation > 1) {
+                    navigateToStation(currentStation - 1);
+                }
+            }
+        });
+
+        // Initialize GSAP animations
+        gsap.registerPlugin(ScrollTrigger, TextPlugin);
+        
+        // Animate tool cards on station 3 activation
+        const observeStations = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.target.classList.contains('active')) {
+                    const stationNum = mutation.target.dataset.station;
+                    if (stationNum === '3') {
+                        gsap.from('.tool-card', {
+                            y: 100,
+                            opacity: 0,
+                            duration: 1,
+                            stagger: 0.2,
+                            ease: 'power3.out'
+                        });
+                    }
+                }
+            });
+        });
+        
+        document.querySelectorAll('.station').forEach(station => {
+            observeStations.observe(station, { attributes: true, attributeFilter: ['class'] });
+        });
+
+        // Particle animations
+        gsap.to('.particle-1', {
+            x: 'random(-100, 100)',
+            y: 'random(-100, 100)',
+            duration: 'random(10, 20)',
+            repeat: -1,
+            yoyo: true,
+            ease: 'none'
+        });
+
+        // Initialize
+        navigateToStation(1);
+    </script>
+</body>
+</html>
