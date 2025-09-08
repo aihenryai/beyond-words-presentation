@@ -3,720 +3,992 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מעבר למילים: איך בינה מלאכותית חושפת תובנות מהמידע</title>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
-    
-    <!-- GSAP for animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    <title>מעבר למילים - מצגת אינטראקטיבית | הנרי שטאובר</title>
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #667eea 100%);
+            --bg-dark: #0a0a0a;
+            --text-light: rgba(255, 255, 255, 0.9);
+            --text-dim: rgba(255, 255, 255, 0.6);
+            --island-1-color: #FF006E;
+            --island-2-color: #8338EC;
+            --island-3-color: #3A86FF;
+            --island-4-color: #06FFA5;
+        }
+
         body {
             font-family: 'Heebo', sans-serif;
-            background: #000;
-            color: #fff;
+            background: var(--bg-dark);
+            color: var(--text-light);
             overflow: hidden;
-            cursor: none;
+            position: relative;
+            cursor: grab;
         }
 
-        /* Custom Cursor */
-        .cursor {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            transition: all 0.1s ease;
-            mix-blend-mode: difference;
-        }
-
-        .cursor-follower {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9998;
-            transition: all 0.3s ease;
+        body.dragging {
+            cursor: grabbing;
         }
 
         /* Main Canvas Container */
-        .universe-canvas {
-            width: 500vw;
-            height: 500vh;
+        .infinite-canvas {
             position: absolute;
-            background: radial-gradient(ellipse at center, #0a0033 0%, #000 100%);
-            transition: transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            width: 5000px;
+            height: 3000px;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(131, 56, 236, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 30% 80%, rgba(58, 134, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(6, 255, 165, 0.1) 0%, transparent 50%),
+                var(--bg-dark);
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: center center;
         }
 
-        /* Stars Background */
-        .stars {
-            position: fixed;
+        /* Animated Grid Background */
+        .grid-background {
+            position: absolute;
             width: 100%;
             height: 100%;
-            z-index: 1;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 100px 100px;
+            animation: gridMove 30s linear infinite;
         }
 
-        .star {
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(100px, 100px); }
+        }
+
+        /* Islands (Content Stations) */
+        .island {
             position: absolute;
-            width: 2px;
-            height: 2px;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.5); }
-        }
-
-        /* Navigation Dots */
-        .navigation {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            gap: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
             border-radius: 50px;
-            backdrop-filter: blur(10px);
-        }
-
-        .nav-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 3rem;
+            transition: all 0.5s ease;
             cursor: pointer;
-            transition: all 0.3s ease;
+            overflow: hidden;
         }
 
-        .nav-dot.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transform: scale(1.5);
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
-        }
-
-        /* Station Base Style */
-        .station {
+        .island::before {
+            content: '';
             position: absolute;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--island-glow) 0%, transparent 70%);
             opacity: 0;
-            transform: scale(0.8);
-            transition: all 1s ease;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
         }
 
-        .station.active {
-            opacity: 1;
-            transform: scale(1);
+        .island:hover {
+            transform: scale(1.05);
+            border-color: var(--island-glow);
+            box-shadow: 0 0 100px rgba(255, 255, 255, 0.2);
         }
 
-        /* Station 1: Opening */
-        .station-1 {
-            top: 250vh;
-            left: 250vw;
+        .island:hover::before {
+            opacity: 0.3;
         }
 
-        .opening-container {
+        /* Island 1: Opening */
+        .island-1 {
+            --island-glow: var(--island-1-color);
+            width: 900px;
+            height: 600px;
+            top: 200px;
+            left: 300px;
+        }
+
+        /* Island 2: Historical Journey */
+        .island-2 {
+            --island-glow: var(--island-2-color);
+            width: 1200px;
+            height: 800px;
+            top: 200px;
+            left: 1400px;
+        }
+
+        /* Island 3: Tools Demo */
+        .island-3 {
+            --island-glow: var(--island-3-color);
+            width: 1400px;
+            height: 900px;
+            top: 200px;
+            left: 2800px;
+        }
+
+        /* Island 4: Conclusion */
+        .island-4 {
+            --island-glow: var(--island-4-color);
+            width: 1000px;
+            height: 700px;
+            top: 1300px;
+            left: 2000px;
+        }
+
+        /* Island Headers */
+        .island-header {
             text-align: center;
-            position: relative;
-        }
-
-        .morphing-text {
-            font-size: 8rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #667eea 100%);
-            background-size: 400% 400%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradient-shift 3s ease infinite;
-        }
-
-        @keyframes gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .subtitle-animated {
-            font-size: 2rem;
-            margin-top: 2rem;
+            margin-bottom: 2rem;
             opacity: 0;
-            animation: fadeInUp 1s ease 1s forwards;
+            animation: fadeInUp 1s ease forwards;
+            animation-delay: 0.5s;
         }
 
         @keyframes fadeInUp {
             to {
                 opacity: 1;
-                transform: translateY(-20px);
+                transform: translateY(0);
+            }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
             }
         }
 
-        /* Station 2: Historical Journey */
-        .station-2 {
-            top: 150vh;
-            left: 400vw;
-        }
-
-        .timeline-container {
-            position: relative;
-            width: 80vw;
-            height: 60vh;
-        }
-
-        .era-card {
-            position: absolute;
-            width: 300px;
-            height: 400px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.5s ease;
-            cursor: pointer;
-        }
-
-        .era-card:hover {
-            transform: translateY(-20px) scale(1.05);
-            box-shadow: 0 30px 60px rgba(138, 43, 226, 0.4);
-        }
-
-        .era-1 { top: 10%; left: 5%; background: linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(205, 133, 63, 0.3)); }
-        .era-2 { top: 20%; left: 30%; background: linear-gradient(135deg, rgba(38, 50, 56, 0.3), rgba(84, 110, 122, 0.3)); }
-        .era-3 { top: 10%; left: 55%; background: linear-gradient(135deg, rgba(13, 71, 161, 0.3), rgba(66, 165, 245, 0.3)); }
-        .era-4 { top: 20%; left: 80%; background: linear-gradient(135deg, rgba(74, 20, 140, 0.3), rgba(171, 71, 188, 0.3)); }
-
-        /* Station 3: AI Tools */
-        .station-3 {
-            top: 350vh;
-            left: 100vw;
-        }
-
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 3rem;
-            max-width: 80vw;
-        }
-
-        .tool-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(30px);
-            border-radius: 30px;
-            padding: 3rem;
-            border: 2px solid transparent;
-            background-clip: padding-box;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.5s ease;
-        }
-
-        .tool-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--tool-color) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            z-index: -1;
-        }
-
-        .tool-card:hover::before {
-            opacity: 0.3;
-        }
-
-        .tool-1 { --tool-color: #FF006E; border-color: #FF006E; }
-        .tool-2 { --tool-color: #8338EC; border-color: #8338EC; }
-        .tool-3 { --tool-color: #3A86FF; border-color: #3A86FF; }
-        .tool-4 { --tool-color: #06FFA5; border-color: #06FFA5; }
-
-        .tool-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-
-        .tool-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        /* Station 4: Conclusion */
-        .station-4 {
-            top: 50vh;
-            left: 350vw;
-        }
-
-        .conclusion-container {
-            text-align: center;
-            max-width: 80vw;
-        }
-
-        .final-message {
+        .island-title {
             font-size: 3rem;
             font-weight: 900;
-            background: linear-gradient(135deg, #FF006E 0%, #8338EC 25%, #3A86FF 50%, #06FFA5 75%, #FFB700 100%);
-            background-size: 200% 200%;
+            background: var(--primary-gradient);
+            background-size: 400% 400%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: gradient-flow 4s ease infinite;
-            margin-bottom: 3rem;
+            animation: gradientShift 3s ease infinite;
+            margin-bottom: 1rem;
         }
 
-        @keyframes gradient-flow {
+        @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
-        .cta-buttons {
-            display: flex;
-            gap: 2rem;
-            justify-content: center;
-            margin-top: 3rem;
+        .island-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-dim);
+            font-weight: 300;
         }
 
-        .cta-button {
-            padding: 1.5rem 3rem;
-            background: linear-gradient(135deg, var(--btn-color1) 0%, var(--btn-color2) 100%);
-            border: none;
-            border-radius: 50px;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 700;
+        /* Navigation Minimap */
+        .minimap {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 250px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
             cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
             overflow: hidden;
         }
 
-        .cta-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        .minimap-canvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
 
-        .btn-1 { --btn-color1: #FF006E; --btn-color2: #8338EC; }
-        .btn-2 { --btn-color1: #3A86FF; --btn-color2: #06FFA5; }
-        .btn-3 { --btn-color1: #FFB700; --btn-color2: #FF006E; }
+        .minimap-island {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .minimap-island:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .minimap-viewport {
+            position: absolute;
+            border: 2px solid #fff;
+            background: rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .nav-button.active {
+            background: var(--primary-gradient);
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        /* Progress Indicator */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1001;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 25%;
+            background: var(--primary-gradient);
+            transition: width 0.5s ease;
+        }
 
         /* Floating Particles */
         .particle {
             position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
             pointer-events: none;
-            opacity: 0.6;
+            animation: float 20s infinite ease-in-out;
         }
 
-        .particle-1 {
-            width: 100px;
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+            10%, 90% {
+                opacity: 1;
+            }
+            50% {
+                transform: translate(100px, -100px) scale(1.5);
+            }
+        }
+
+        /* Morphing Text for Island 1 */
+        .morphing-text {
+            font-size: 4rem;
+            font-weight: 900;
+            text-align: center;
+            margin: 2rem 0;
             height: 100px;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.8) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float-1 20s infinite ease-in-out;
-        }
-
-        @keyframes float-1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(100px, -100px) scale(1.2); }
-            66% { transform: translate(-100px, 100px) scale(0.8); }
-        }
-
-        /* Controls */
-        .controls {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            z-index: 1000;
             display: flex;
-            gap: 15px;
+            align-items: center;
+            justify-content: center;
         }
 
-        .control-btn {
-            width: 50px;
-            height: 50px;
+        /* Timeline for Island 2 */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3rem 0;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, 
+                #8B4513 0%, 
+                #000000 33%, 
+                #00FFFF 66%, 
+                #FF00FF 100%);
+            transform: translateY(-50%);
+        }
+
+        .timeline-dot {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-dark);
+            border: 3px solid #fff;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
+            position: relative;
+            z-index: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .control-btn:hover {
+        .timeline-dot:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+
+        .timeline-label {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        /* Tools Grid for Island 3 */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--tool-color);
+        }
+
+        .tool-card:nth-child(1) { --tool-color: #FF006E; }
+        .tool-card:nth-child(2) { --tool-color: #8338EC; }
+        .tool-card:nth-child(3) { --tool-color: #3A86FF; }
+        .tool-card:nth-child(4) { --tool-color: #06FFA5; }
+
+        .tool-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-desc {
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Call to Action for Island 4 */
+        .cta-container {
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1.5rem 3rem;
+            background: var(--primary-gradient);
+            background-size: 200% 200%;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .zoom-button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .zoom-button:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: scale(1.1);
         }
 
-        /* Speaker Info */
-        .speaker-info {
+        /* Connecting Lines Between Islands */
+        .connection-line {
+            position: absolute;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent 100%);
+            height: 2px;
+            transform-origin: left center;
+            pointer-events: none;
+            animation: pulse 3s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Loading Screen */
+        .loading-screen {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 1rem 2rem;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 1s ease;
         }
 
-        .speaker-name {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #667eea;
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
-        /* Responsive */
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 768px) {
-            .morphing-text { font-size: 4rem; }
-            .tools-grid { grid-template-columns: 1fr; }
-            .era-card { width: 200px; height: 300px; }
+            .minimap {
+                width: 150px;
+                height: 90px;
+            }
+            
+            .nav-controls {
+                bottom: 130px;
+            }
+            
+            .island-title {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Custom Cursor -->
-    <div class="cursor"></div>
-    <div class="cursor-follower"></div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+    </div>
 
-    <!-- Stars Background -->
-    <div class="stars" id="stars"></div>
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="zoom-controls">
+        <button class="zoom-button" onclick="zoomIn()">+</button>
+        <button class="zoom-button" onclick="zoomOut()">-</button>
+        <button class="zoom-button" onclick="resetZoom()">⟲</button>
+    </div>
 
     <!-- Main Canvas -->
-    <div class="universe-canvas" id="canvas">
+    <div class="infinite-canvas" id="canvas">
+        <div class="grid-background"></div>
         
-        <!-- Station 1: Opening -->
-        <div class="station station-1 active" data-station="1">
-            <div class="opening-container">
-                <h1 class="morphing-text" id="morphText">מידע</h1>
-                <p class="subtitle-animated">איך בינה מלאכותית חושפת תובנות מהמידע</p>
-                <div class="particle particle-1" style="top: -50px; left: -50px;"></div>
-                <div class="particle particle-1" style="bottom: -50px; right: -50px;"></div>
+        <!-- Floating Particles -->
+        <div id="particlesContainer"></div>
+        
+        <!-- Connection Lines -->
+        <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none;">
+            <line class="connection-line" x1="700" y1="500" x2="1400" y2="600" 
+                  stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="10,5"/>
+            <line class="connection-line" x1="2000" y1="600" x2="2800" y2="650" 
+                  stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="10,5"/>
+            <line class="connection-line" x1="3500" y1="650" x2="2500" y2="1300" 
+                  stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="10,5"/>
+        </svg>
+        
+        <!-- Island 1: Opening -->
+        <div class="island island-1" data-island="1">
+            <div class="island-header">
+                <h1 class="island-title">מעבר למילים</h1>
+                <p class="island-subtitle">איך בינה מלאכותית חושפת תובנות מהמידע</p>
             </div>
-        </div>
-
-        <!-- Station 2: Historical Journey -->
-        <div class="station station-2" data-station="2">
-            <div class="timeline-container">
-                <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem;">המסע ההיסטורי של המידע</h2>
-                
-                <div class="era-card era-1">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎨</div>
-                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">עידן היצירתיות הקדומה</h3>
-                    <p>קיפו האינקית, כתב חרתומים, ציורי מערות - המידע חי בצורות, צבעים וסמלים</p>
-                </div>
-                
-                <div class="era-card era-2">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">📜</div>
-                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">עידן המילה הכתובה</h3>
-                    <p>גוטנברג והדפוס - סטנדרטיזציה של מידע, נגישות רחבה אך אובדן היצירתיות</p>
-                </div>
-                
-                <div class="era-card era-3">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">💻</div>
-                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">העידן הדיגיטלי</h3>
-                    <p>מחשבים ואינטרנט - אותו מידע טקסטואלי, רק על מסכים</p>
-                </div>
-                
-                <div class="era-card era-4">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🤖</div>
-                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">מהפכת ה-AI</h3>
-                    <p>חזרה ליצירתיות עם כוח על - מידע הופך לכל דבר שנחלום עליו</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Station 3: AI Tools -->
-        <div class="station station-3" data-station="3">
-            <div class="tools-container">
-                <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem;">הכלים שמשנים הכל</h2>
-                
-                <div class="tools-grid">
-                    <div class="tool-card tool-1">
-                        <div class="tool-icon">🎙️</div>
-                        <h3 class="tool-title">NotebookLM</h3>
-                        <p>הופך מסמכים לפודקאסטים מרתקים - שני מנחים וירטואליים מנתחים ודנים בתוכן שלך</p>
-                    </div>
-                    
-                    <div class="tool-card tool-2">
-                        <div class="tool-icon">📊</div>
-                        <h3 class="tool-title">Flourish</h3>
-                        <p>נתונים הופכים לסיפורים חיים - ויזואליזציות אינטראקטיביות שמזמינות חקירה</p>
-                    </div>
-                    
-                    <div class="tool-card tool-3">
-                        <div class="tool-icon">✨</div>
-                        <h3 class="tool-title">Claude Artifacts</h3>
-                        <p>יוצר תוכן אינטראקטיבי בזמן אמת - משחקים, סימולטורים וכלי עבודה</p>
-                    </div>
-                    
-                    <div class="tool-card tool-4">
-                        <div class="tool-icon">🔍</div>
-                        <h3 class="tool-title">GenSpark</h3>
-                        <p>חיפוש הופך לחוויה ויזואלית - דפי נחיתה מותאמים אישית לכל שאילתה</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Station 4: Conclusion -->
-        <div class="station station-4" data-station="4">
-            <div class="conclusion-container">
-                <h2 class="final-message">המידע תמיד היה כוח.<br>עכשיו יש לנו את הכוח להפוך אותו לכל דבר.</h2>
-                
-                <p style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.8);">
-                    אתם לא רק שומרי מידע - אתם אדריכלי חוויות מידע.<br>
-                    הזמן להוביל את המהפכה בארגונים שלכם.
-                </p>
-                
-                <div class="cta-buttons">
-                    <button class="cta-button btn-1">התחילו קטן</button>
-                    <button class="cta-button btn-2">חקרו וגלו</button>
-                    <button class="cta-button btn-3">הובילו שינוי</button>
-                </div>
-                
-                <p style="font-size: 2rem; margin-top: 4rem; font-weight: 900;">
-                    השאלה היא: מה תבחרו ליצור? 🚀
+            
+            <div class="morphing-text" id="morphingText">מידע</div>
+            
+            <div style="text-align: center; margin-top: 3rem;">
+                <p style="font-size: 1.3rem; line-height: 1.8;">
+                    ברוכים הבאים למסע מרתק<br>
+                    שבו מידע הופך לחוויה<br>
+                    <span style="color: var(--island-1-color); font-weight: 700;">הנרי שטאובר</span><br>
+                    יוצר תוכן ויועץ בבינה מלאכותית
                 </p>
             </div>
         </div>
+        
+        <!-- Island 2: Historical Journey -->
+        <div class="island island-2" data-island="2">
+            <div class="island-header">
+                <h2 class="island-title">המסע ההיסטורי</h2>
+                <p class="island-subtitle">מציורי מערות ועד בינה מלאכותית</p>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-dot">
+                    <span>🎨</span>
+                    <span class="timeline-label">יצירתיות קדומה</span>
+                </div>
+                <div class="timeline-dot">
+                    <span>📜</span>
+                    <span class="timeline-label">המילה הכתובה</span>
+                </div>
+                <div class="timeline-dot">
+                    <span>💻</span>
+                    <span class="timeline-label">העידן הדיגיטלי</span>
+                </div>
+                <div class="timeline-dot">
+                    <span>🤖</span>
+                    <span class="timeline-label">מהפכת ה-AI</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 3rem; text-align: center;">
+                <p style="font-size: 1.2rem; line-height: 1.8;">
+                    <strong>קיפו האינקית</strong> - מערכת קשרים צבעוניים<br>
+                    <strong>כתב חרתומים</strong> - סיפורים חיים על הקירות<br>
+                    <strong>מטבעות עתיקים</strong> - הרשת החברתית הקדומה<br>
+                    <strong>ציורי מערות</strong> - העיתונות הקדמונית
+                </p>
+            </div>
+        </div>
+        
+        <!-- Island 3: Tools Demo -->
+        <div class="island island-3" data-island="3">
+            <div class="island-header">
+                <h2 class="island-title">הכלים שמשנים הכל</h2>
+                <p class="island-subtitle">4 טכנולוגיות שהופכות מידע לחוויה</p>
+            </div>
+            
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <div class="tool-icon">🎙️</div>
+                    <div class="tool-name">NotebookLM</div>
+                    <div class="tool-desc">
+                        מחקר הופך לשיחה חיה<br>
+                        פודקאסטים מקצועיים מכל מסמך
+                    </div>
+                </div>
+                
+                <div class="tool-card">
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-name">Flourish</div>
+                    <div class="tool-desc">
+                        נתונים הופכים לסיפור חי<br>
+                        ויזואליזציות אינטראקטיביות
+                    </div>
+                </div>
+                
+                <div class="tool-card">
+                    <div class="tool-icon">🤖</div>
+                    <div class="tool-name">Claude Artifacts</div>
+                    <div class="tool-desc">
+                        תוכן שחי ונושם<br>
+                        אפליקציות ומשחקים בזמן אמת
+                    </div>
+                </div>
+                
+                <div class="tool-card">
+                    <div class="tool-icon">🔍</div>
+                    <div class="tool-name">GenSpark</div>
+                    <div class="tool-desc">
+                        חיפוש הופך לחוויה ויזואלית<br>
+                        דפי נחיתה מיוחדים לכל חיפוש
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Island 4: Conclusion -->
+        <div class="island island-4" data-island="4">
+            <div class="island-header">
+                <h2 class="island-title">החזרה למעגל המלא</h2>
+                <p class="island-subtitle">מידע הופך לכל דבר שנחלום עליו</p>
+            </div>
+            
+            <div style="text-align: center; margin: 2rem 0;">
+                <p style="font-size: 1.5rem; line-height: 1.8; font-weight: 700;">
+                    כמו האינקים עם הקיפו<br>
+                    כמו המצרים עם החרתומים<br>
+                    <span style="color: var(--island-4-color);">עכשיו תורכם ליצור!</span>
+                </p>
+            </div>
+            
+            <div class="cta-container">
+                <a href="#" class="cta-button" onclick="startJourney()">התחילו את המסע שלכם</a>
+            </div>
+            
+            <div style="margin-top: 3rem; text-align: center;">
+                <p style="font-size: 1.1rem; color: var(--text-dim);">
+                    📱 ערוץ YouTube | 🎓 סדנאות מתקדמות | ✉️ יצירת קשר
+                </p>
+            </div>
+        </div>
     </div>
 
-    <!-- Navigation -->
-    <div class="navigation">
-        <div class="nav-dot active" data-target="1"></div>
-        <div class="nav-dot" data-target="2"></div>
-        <div class="nav-dot" data-target="3"></div>
-        <div class="nav-dot" data-target="4"></div>
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-button active" onclick="navigateToIsland(1)">פתיחה</button>
+        <button class="nav-button" onclick="navigateToIsland(2)">מסע היסטורי</button>
+        <button class="nav-button" onclick="navigateToIsland(3)">כלים</button>
+        <button class="nav-button" onclick="navigateToIsland(4)">סיכום</button>
     </div>
 
-    <!-- Controls -->
-    <div class="controls">
-        <button class="control-btn" id="prevBtn">←</button>
-        <button class="control-btn" id="nextBtn">→</button>
-        <button class="control-btn" id="fullscreenBtn">⛶</button>
-    </div>
-
-    <!-- Speaker Info -->
-    <div class="speaker-info">
-        <div class="speaker-name">הנרי שטאובר</div>
-        <div>יוצר תוכן ויועץ בבינה מלאכותית</div>
+    <!-- Minimap -->
+    <div class="minimap" id="minimap">
+        <div class="minimap-canvas">
+            <div class="minimap-island" style="width: 18%; height: 20%; top: 6%; left: 6%;"></div>
+            <div class="minimap-island" style="width: 24%; height: 27%; top: 6%; left: 28%;"></div>
+            <div class="minimap-island" style="width: 28%; height: 30%; top: 6%; left: 56%;"></div>
+            <div class="minimap-island" style="width: 20%; height: 23%; top: 43%; left: 40%;"></div>
+            <div class="minimap-viewport" id="minimapViewport"></div>
+        </div>
     </div>
 
     <script>
-        // Initialize
-        let currentStation = 1;
-        const totalStations = 4;
-        const canvas = document.getElementById('canvas');
-        
-        // Create stars
-        const starsContainer = document.getElementById('stars');
-        for (let i = 0; i < 200; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 3 + 's';
-            starsContainer.appendChild(star);
-        }
+        // Canvas state
+        let currentIsland = 1;
+        let canvasPosition = { x: 0, y: 0 };
+        let zoomLevel = 1;
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let canvasStart = { x: 0, y: 0 };
 
-        // Custom cursor
-        const cursor = document.querySelector('.cursor');
-        const follower = document.querySelector('.cursor-follower');
-        
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX - 10 + 'px';
-            cursor.style.top = e.clientY - 10 + 'px';
-            
+        // Elements
+        const canvas = document.getElementById('canvas');
+        const progressFill = document.getElementById('progressFill');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const morphingText = document.getElementById('morphingText');
+        const minimapViewport = document.getElementById('minimapViewport');
+
+        // Island positions
+        const islandPositions = {
+            1: { x: -750, y: -400 },
+            2: { x: -2000, y: -600 },
+            3: { x: -3500, y: -650 },
+            4: { x: -2500, y: -1650 }
+        };
+
+        // Initialize
+        window.addEventListener('load', () => {
             setTimeout(() => {
-                follower.style.left = e.clientX - 20 + 'px';
-                follower.style.top = e.clientY - 20 + 'px';
-            }, 100);
+                loadingScreen.classList.add('hidden');
+                createParticles();
+                startMorphingText();
+                setupDragControls();
+                setupKeyboardControls();
+                updateMinimap();
+                navigateToIsland(1);
+            }, 1500);
         });
+
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particlesContainer');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 5000 + 'px';
+                particle.style.top = Math.random() * 3000 + 'px';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = 20 + Math.random() * 10 + 's';
+                container.appendChild(particle);
+            }
+        }
 
         // Morphing text animation
-        const morphText = document.getElementById('morphText');
-        const words = ['מידע', 'נתונים', 'סיפור', 'חוויה'];
-        let wordIndex = 0;
-        
-        setInterval(() => {
-            wordIndex = (wordIndex + 1) % words.length;
-            gsap.to(morphText, {
-                opacity: 0,
-                duration: 0.5,
-                onComplete: () => {
-                    morphText.textContent = words[wordIndex];
-                    gsap.to(morphText, { opacity: 1, duration: 0.5 });
-                }
-            });
-        }, 3000);
-
-        // Navigation function
-        function navigateToStation(stationNumber) {
-            if (stationNumber < 1 || stationNumber > totalStations) return;
+        function startMorphingText() {
+            const words = ['מידע', 'נתונים', 'סיפור', 'חוויה'];
+            let index = 0;
             
-            currentStation = stationNumber;
-            
-            // Update active states
-            document.querySelectorAll('.station').forEach(s => s.classList.remove('active'));
-            document.querySelector(`.station-${stationNumber}`).classList.add('active');
-            
-            document.querySelectorAll('.nav-dot').forEach(d => d.classList.remove('active'));
-            document.querySelectorAll('.nav-dot')[stationNumber - 1].classList.add('active');
-            
-            // Calculate position
-            const positions = {
-                1: { x: -250, y: -250 }, // Station 1 at center
-                2: { x: -400, y: -150 }, // Station 2
-                3: { x: -100, y: -350 }, // Station 3
-                4: { x: -350, y: -50 }   // Station 4
-            };
-            
-            const pos = positions[stationNumber];
-            canvas.style.transform = `translate(${pos.x}vw, ${pos.y}vh)`;
+            setInterval(() => {
+                index = (index + 1) % words.length;
+                morphingText.style.opacity = '0';
+                setTimeout(() => {
+                    morphingText.textContent = words[index];
+                    morphingText.style.opacity = '1';
+                }, 500);
+            }, 2500);
         }
 
-        // Navigation dots
-        document.querySelectorAll('.nav-dot').forEach(dot => {
-            dot.addEventListener('click', () => {
-                const target = parseInt(dot.dataset.target);
-                navigateToStation(target);
+        // Navigation functions
+        function navigateToIsland(islandNumber) {
+            currentIsland = islandNumber;
+            const position = islandPositions[islandNumber];
+            
+            canvasPosition.x = position.x;
+            canvasPosition.y = position.y;
+            
+            updateCanvasPosition();
+            updateProgressBar();
+            updateActiveButton();
+            updateMinimap();
+        }
+
+        function updateCanvasPosition() {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            
+            canvas.style.transform = `
+                translate(${canvasPosition.x + centerX}px, ${canvasPosition.y + centerY}px) 
+                scale(${zoomLevel})
+            `;
+        }
+
+        function updateProgressBar() {
+            const progress = (currentIsland / 4) * 100;
+            progressFill.style.width = progress + '%';
+        }
+
+        function updateActiveButton() {
+            document.querySelectorAll('.nav-button').forEach((btn, index) => {
+                btn.classList.toggle('active', index === currentIsland - 1);
             });
-        });
+        }
 
-        // Control buttons
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            if (currentStation > 1) navigateToStation(currentStation - 1);
-        });
-
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            if (currentStation < totalStations) navigateToStation(currentStation + 1);
-        });
-
-        document.getElementById('fullscreenBtn').addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' && currentStation > 1) {
-                navigateToStation(currentStation - 1);
-            } else if (e.key === 'ArrowRight' && currentStation < totalStations) {
-                navigateToStation(currentStation + 1);
-            } else if (e.key === 'Escape' && document.fullscreenElement) {
-                document.exitFullscreen();
-            } else if (e.key >= '1' && e.key <= '4') {
-                navigateToStation(parseInt(e.key));
-            }
-        });
-
-        // Mouse wheel navigation
-        let isScrolling = false;
-        document.addEventListener('wheel', (e) => {
-            if (isScrolling) return;
-            isScrolling = true;
+        function updateMinimap() {
+            const viewportWidth = (window.innerWidth / 5000) * 100;
+            const viewportHeight = (window.innerHeight / 3000) * 100;
+            const viewportX = Math.abs(canvasPosition.x / 5000) * 100;
+            const viewportY = Math.abs(canvasPosition.y / 3000) * 100;
             
-            if (e.deltaY > 0 && currentStation < totalStations) {
-                navigateToStation(currentStation + 1);
-            } else if (e.deltaY < 0 && currentStation > 1) {
-                navigateToStation(currentStation - 1);
-            }
-            
-            setTimeout(() => { isScrolling = false; }, 1000);
-        });
+            minimapViewport.style.width = viewportWidth + '%';
+            minimapViewport.style.height = viewportHeight + '%';
+            minimapViewport.style.left = viewportX + '%';
+            minimapViewport.style.top = viewportY + '%';
+        }
 
-        // Touch navigation for mobile
-        let touchStartX = 0;
-        let touchStartY = 0;
-        
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            const diffX = touchStartX - touchEndX;
-            const diffY = touchStartY - touchEndY;
+        // Drag controls
+        function setupDragControls() {
+            let isSpacePressed = false;
             
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 50 && currentStation < totalStations) {
-                    navigateToStation(currentStation + 1);
-                } else if (diffX < -50 && currentStation > 1) {
-                    navigateToStation(currentStation - 1);
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !isSpacePressed) {
+                    e.preventDefault();
+                    isSpacePressed = true;
+                    document.body.style.cursor = 'grab';
                 }
-            }
-        });
-
-        // Initialize GSAP animations
-        gsap.registerPlugin(ScrollTrigger, TextPlugin);
-        
-        // Animate tool cards on station 3 activation
-        const observeStations = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.target.classList.contains('active')) {
-                    const stationNum = mutation.target.dataset.station;
-                    if (stationNum === '3') {
-                        gsap.from('.tool-card', {
-                            y: 100,
-                            opacity: 0,
-                            duration: 1,
-                            stagger: 0.2,
-                            ease: 'power3.out'
-                        });
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                if (e.code === 'Space') {
+                    isSpacePressed = false;
+                    if (!isDragging) {
+                        document.body.style.cursor = 'default';
                     }
                 }
             });
+            
+            canvas.addEventListener('mousedown', (e) => {
+                if (isSpacePressed) {
+                    isDragging = true;
+                    document.body.classList.add('dragging');
+                    dragStart.x = e.clientX;
+                    dragStart.y = e.clientY;
+                    canvasStart.x = canvasPosition.x;
+                    canvasStart.y = canvasPosition.y;
+                    canvas.style.transition = 'none';
+                }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - dragStart.x;
+                    const deltaY = e.clientY - dragStart.y;
+                    
+                    canvasPosition.x = canvasStart.x + deltaX;
+                    canvasPosition.y = canvasStart.y + deltaY;
+                    
+                    updateCanvasPosition();
+                    updateMinimap();
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    document.body.classList.remove('dragging');
+                    if (!isSpacePressed) {
+                        document.body.style.cursor = 'default';
+                    }
+                    canvas.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                }
+            });
+        }
+
+        // Keyboard controls
+        function setupKeyboardControls() {
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'ArrowRight' && currentIsland < 4) {
+                    navigateToIsland(currentIsland + 1);
+                } else if (e.code === 'ArrowLeft' && currentIsland > 1) {
+                    navigateToIsland(currentIsland - 1);
+                } else if (e.code === 'Equal' || e.code === 'NumpadAdd') {
+                    zoomIn();
+                } else if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+                    zoomOut();
+                } else if (e.code === 'Digit0') {
+                    resetZoom();
+                }
+            });
+        }
+
+        // Zoom functions
+        function zoomIn() {
+            zoomLevel = Math.min(zoomLevel + 0.1, 2);
+            updateCanvasPosition();
+        }
+
+        function zoomOut() {
+            zoomLevel = Math.max(zoomLevel - 0.1, 0.5);
+            updateCanvasPosition();
+        }
+
+        function resetZoom() {
+            zoomLevel = 1;
+            updateCanvasPosition();
+        }
+
+        // Island click navigation
+        document.querySelectorAll('.island').forEach(island => {
+            island.addEventListener('click', (e) => {
+                if (!isDragging) {
+                    const islandNumber = parseInt(island.dataset.island);
+                    navigateToIsland(islandNumber);
+                }
+            });
+        });
+
+        // Minimap click navigation
+        document.getElementById('minimap').addEventListener('click', (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 5000;
+            const y = ((e.clientY - rect.top) / rect.height) * 3000;
+            
+            canvasPosition.x = -x + window.innerWidth / 2;
+            canvasPosition.y = -y + window.innerHeight / 2;
+            
+            updateCanvasPosition();
+            updateMinimap();
+        });
+
+        // Start journey function
+        function startJourney() {
+            navigateToIsland(1);
+            setTimeout(() => navigateToIsland(2), 2000);
+            setTimeout(() => navigateToIsland(3), 4000);
+            setTimeout(() => navigateToIsland(4), 6000);
+        }
+
+        // Auto-play option
+        let autoPlayInterval;
+        function toggleAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            } else {
+                autoPlayInterval = setInterval(() => {
+                    const nextIsland = currentIsland === 4 ? 1 : currentIsland + 1;
+                    navigateToIsland(nextIsland);
+                }, 8000);
+            }
+        }
+
+        // Touch support for mobile
+        let touchStart = { x: 0, y: 0 };
+        
+        canvas.addEventListener('touchstart', (e) => {
+            touchStart.x = e.touches[0].clientX;
+            touchStart.y = e.touches[0].clientY;
+            canvasStart.x = canvasPosition.x;
+            canvasStart.y = canvasPosition.y;
         });
         
-        document.querySelectorAll('.station').forEach(station => {
-            observeStations.observe(station, { attributes: true, attributeFilter: ['class'] });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const deltaX = e.touches[0].clientX - touchStart.x;
+            const deltaY = e.touches[0].clientY - touchStart.y;
+            
+            canvasPosition.x = canvasStart.x + deltaX;
+            canvasPosition.y = canvasStart.y + deltaY;
+            
+            updateCanvasPosition();
+            updateMinimap();
         });
-
-        // Particle animations
-        gsap.to('.particle-1', {
-            x: 'random(-100, 100)',
-            y: 'random(-100, 100)',
-            duration: 'random(10, 20)',
-            repeat: -1,
-            yoyo: true,
-            ease: 'none'
-        });
-
-        // Initialize
-        navigateToStation(1);
     </script>
 </body>
 </html>
