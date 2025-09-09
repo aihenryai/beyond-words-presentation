@@ -24,11 +24,11 @@
             direction: rtl;
         }
 
-        /* Canvas Container - Larger for better navigation */
+        /* Canvas Container - Optimized size */
         #canvas {
             position: relative;
-            width: 8000px;
-            height: 4500px;
+            width: 4500px;
+            height: 3000px;
             background: radial-gradient(circle at 50% 50%, #1a1a3e 0%, #0a0a0a 100%);
             transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -139,32 +139,32 @@
             50% { transform: scale(1.02); }
         }
 
-        /* Island 1 - Opening (Larger and centered) */
+        /* Island 1 - Opening (Centered positioning) */
         #island1 {
             --island-color: #FF006E;
             --island-rgb: 255, 0, 110;
-            right: 3000px;
-            top: 1800px;
+            left: 500px;
+            top: 1200px;
             width: 900px;
             height: 600px;
         }
 
-        /* Island 2 - Historical Journey (Larger) */
+        /* Island 2 - Historical Journey (Better spacing) */
         #island2 {
             --island-color: #8338EC;
             --island-rgb: 131, 56, 236;
-            right: 4500px;
-            top: 1500px;
+            left: 1600px;
+            top: 800px;
             width: 1000px;
             height: 700px;
         }
 
-        /* Island 3 - Tools (Largest - main content) */
+        /* Island 3 - Tools (Main content) */
         #island3 {
             --island-color: #3A86FF;
             --island-rgb: 58, 134, 255;
-            right: 6200px;
-            top: 2000px;
+            left: 2800px;
+            top: 1100px;
             width: 1200px;
             height: 650px;
         }
@@ -173,8 +173,8 @@
         #island4 {
             --island-color: #06FFA5;
             --island-rgb: 6, 255, 165;
-            right: 4700px;
-            top: 3000px;
+            left: 1900px;
+            top: 2000px;
             width: 950px;
             height: 600px;
         }
@@ -772,10 +772,10 @@
     <!-- Enhanced Minimap -->
     <div class="minimap">
         <div class="minimap-islands">
-            <div class="minimap-island active" style="--island-color: #FF006E; right: 37%; top: 40%;"></div>
-            <div class="minimap-island" style="--island-color: #8338EC; right: 56%; top: 33%;"></div>
-            <div class="minimap-island" style="--island-color: #3A86FF; right: 77%; top: 44%;"></div>
-            <div class="minimap-island" style="--island-color: #06FFA5; right: 59%; top: 67%;"></div>
+            <div class="minimap-island active" style="--island-color: #FF006E; left: 11%; top: 40%;"></div>
+            <div class="minimap-island" style="--island-color: #8338EC; left: 36%; top: 27%;"></div>
+            <div class="minimap-island" style="--island-color: #3A86FF; left: 62%; top: 37%;"></div>
+            <div class="minimap-island" style="--island-color: #06FFA5; left: 42%; top: 67%;"></div>
         </div>
         <div class="minimap-viewport" id="minimapViewport"></div>
     </div>
@@ -1272,7 +1272,7 @@
             const island = document.getElementById(`island${islandNum}`);
             const canvas = document.getElementById('canvas');
             
-            // Calculate center position (adjusted for RTL)
+            // Calculate center position (using left position since islands now use left)
             const targetX = -island.offsetLeft + window.innerWidth / 2 - island.offsetWidth / 2;
             const targetY = -island.offsetTop + window.innerHeight / 2 - island.offsetHeight / 2;
             
@@ -1297,18 +1297,17 @@
 
         // Update minimap viewport
         function updateMinimap() {
-            const canvas = document.getElementById('canvas');
             const viewport = document.getElementById('minimapViewport');
             const transform = canvasPosition || { x: 0, y: 0 };
             
-            // Scale down for minimap
-            const minimapX = Math.abs(transform.x) / 32;
-            const minimapY = Math.abs(transform.y) / 30;
+            // Scale down for minimap (adjusted for new canvas size)
+            const minimapX = (-transform.x / 4500) * 250;
+            const minimapY = (-transform.y / 3000) * 150;
             
-            viewport.style.right = minimapX + 'px';
+            viewport.style.left = minimapX + 'px';
             viewport.style.top = minimapY + 'px';
-            viewport.style.width = (window.innerWidth / 32) + 'px';
-            viewport.style.height = (window.innerHeight / 30) + 'px';
+            viewport.style.width = (window.innerWidth / 4500 * 250) + 'px';
+            viewport.style.height = (window.innerHeight / 3000 * 150) + 'px';
         }
 
         // Open fullscreen modal
