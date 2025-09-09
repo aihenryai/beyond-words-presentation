@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעבר למילים - מצגת אינטראקטיבית | הנרי שטאובר</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+            direction: rtl;
+        }
+
+        /* Canvas Container */
+        #canvas {
+            position: relative;
+            width: 5000px;
+            height: 3000px;
+            background: radial-gradient(circle at 50% 50%, #1a1a3e 0%, #0a0a0a 100%);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Grid Background */
+        #canvas::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(138,43,226,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(138,43,226,0.05) 1px, transparent 1px);
+            background-size: 100px 100px;
+            pointer-events: none;
+        }
+
+        /* Islands (Slides) */
+        .island {
+            position: absolute;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 3rem;
+            transition: all 0.5s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .island:hover {
+            transform: scale(1.05);
+            border-color: var(--island-color);
+            box-shadow: 0 0 100px rgba(138, 43, 226, 0.3);
+        }
+
+        .island.active {
+            border-color: var(--island-color);
+            box-shadow: 0 0 150px var(--island-color);
+        }
+
+        /* Island 1 - Opening (Right side for RTL) */
+        #island1 {
+            --island-color: #FF006E;
+            right: 500px;
+            top: 1200px;
+            width: 600px;
+            height: 400px;
+        }
+
+        /* Island 2 - Historical Journey (Left of Island 1) */
+        #island2 {
+            --island-color: #8338EC;
+            right: 1500px;
+            top: 1000px;
+            width: 700px;
+            height: 500px;
+        }
+
+        /* Island 3 - Tools (More to the left) */
+        #island3 {
+            --island-color: #3A86FF;
+            right: 2600px;
+            top: 1300px;
+            width: 800px;
+            height: 450px;
+        }
+
+        /* Island 4 - Summary (Bottom center) */
+        #island4 {
+            --island-color: #06FFA5;
+            right: 1800px;
+            top: 2000px;
+            width: 650px;
+            height: 400px;
+        }
+
+        /* Island Content */
+        .island-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .island-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--island-color) 0%, #fff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .island-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2rem;
+        }
+
+        .island-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Minimap (Left side for RTL) */
+        .minimap {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 200px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .minimap-viewport {
+            position: absolute;
+            background: rgba(138, 43, 226, 0.3);
+            border: 2px solid #8338EC;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 50%;
+            transform: translateX(50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            direction: ltr;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Progress Bar (RTL - fills from right to left) */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            direction: ltr;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF006E 0%, #8338EC 25%, #3A86FF 50%, #06FFA5 100%);
+            width: 25%;
+            float: right;
+            transition: width 0.5s ease;
+        }
+
+        /* Fullscreen Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(20px);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 1200px;
+            height: 90%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 30px;
+            border: 2px solid var(--modal-color);
+            padding: 3rem;
+            position: relative;
+            overflow-y: auto;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: scale(0.8) translateY(50px); }
+            to { transform: scale(1) translateY(0); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Instructions Panel */
+        .instructions {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            font-size: 0.9rem;
+            max-width: 250px;
+        }
+
+        .instructions h3 {
+            margin-bottom: 0.5rem;
+            color: #8338EC;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 0.3rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .island-title {
+                font-size: 1.8rem;
+            }
+            
+            .island-subtitle {
+                font-size: 1rem;
+            }
+            
+            .nav-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .instructions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressBar"></div>
+    </div>
+
+    <!-- Instructions Panel -->
+    <div class="instructions">
+        <h3>🎮 הוראות שימוש</h3>
+        <ul>
+            <li>🖱️ <strong>לחיצה על תחנה</strong> - מסך מלא</li>
+            <li>⌨️ <strong>חיצים</strong> - ניווט במצגת</li>
+            <li>⌨️ <strong>1-4</strong> - קפיצה לתחנה</li>
+            <li>⌨️ <strong>F</strong> - מסך מלא דפדפן</li>
+            <li>⌨️ <strong>P</strong> - הפעלת אוטומטית</li>
+            <li>⌨️ <strong>ESC</strong> - יציאה</li>
+        </ul>
+    </div>
+
+    <!-- Main Canvas -->
+    <div id="canvas">
+        <!-- Island 1: Opening -->
+        <div class="island active" id="island1" data-island="1">
+            <div class="island-content">
+                <div class="island-icon">🚀</div>
+                <h2 class="island-title">מעבר למילים</h2>
+                <p class="island-subtitle">איך בינה מלאכותית חושפת תובנות מהמידע</p>
+                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">הנרי שטאובר | יוצר תוכן ויועץ AI</p>
+            </div>
+        </div>
+
+        <!-- Island 2: Historical Journey -->
+        <div class="island" id="island2" data-island="2">
+            <div class="island-content">
+                <div class="island-icon">🎨</div>
+                <h2 class="island-title">המסע ההיסטורי</h2>
+                <p class="island-subtitle">מציורי מערות ועד בינה מלאכותית</p>
+                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">4 עידנים של העברת מידע</p>
+            </div>
+        </div>
+
+        <!-- Island 3: Tools -->
+        <div class="island" id="island3" data-island="3">
+            <div class="island-content">
+                <div class="island-icon">🛠️</div>
+                <h2 class="island-title">הכלים שמשנים הכל</h2>
+                <p class="island-subtitle">NotebookLM | Flourish | Claude | GenSpark</p>
+                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">טכנולוגיות שהופכות מידע לחוויה</p>
+            </div>
+        </div>
+
+        <!-- Island 4: Summary -->
+        <div class="island" id="island4" data-island="4">
+            <div class="island-content">
+                <div class="island-icon">✨</div>
+                <h2 class="island-title">החזרה למעגל המלא</h2>
+                <p class="island-subtitle">מה תבחרו ליצור?</p>
+                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">הזמן שלכם לזרוח</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Minimap -->
+    <div class="minimap">
+        <div class="minimap-viewport" id="minimapViewport"></div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="navigateToIsland(2)">⬅ הבא</button>
+        <button class="nav-btn" onclick="toggleAutoPlay()">▶ הפעל</button>
+        <button class="nav-btn" onclick="navigateToIsland(4)">➡ הקודם</button>
+    </div>
+
+    <!-- Fullscreen Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content" id="modalContent">
+            <div class="modal-close" onclick="closeFullscreen()">✕</div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentIsland = 1;
+        let autoPlayInterval = null;
+        const totalIslands = 4;
+
+        // Island content for fullscreen mode
+        const islandFullContent = {
+            1: {
+                color: '#FF006E',
+                title: 'מעבר למילים: איך בינה מלאכותית חושפת תובנות מהמידע',
+                content: `
+                    <h1 style="font-size: 3rem; margin-bottom: 2rem; background: linear-gradient(135deg, #FF006E 0%, #8338EC 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">מעבר למילים</h1>
+                    <h2 style="color: #FF006E; margin-bottom: 2rem;">המהפכה השקטה של המידע</h2>
+                    <p style="font-size: 1.3rem; line-height: 1.8; margin-bottom: 2rem;">האנושות תמיד חיפשה דרכים יצירתיות להעביר מידע. היום, בעידן הבינה המלאכותית, אנחנו חוזרים לשורשים היצירתיים - אבל עם כוח על.</p>
+                    <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; margin: 2rem 0;">
+                        <h3 style="color: #FF006E; margin-bottom: 1rem;">במסע הזה נגלה:</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 1rem;">🎨 איך האנושות העבירה מידע לאורך ההיסטוריה</li>
+                            <li style="margin-bottom: 1rem;">🚀 4 כלים מהפכניים שמשנים את המשחק</li>
+                            <li style="margin-bottom: 1rem;">💡 איך אתם הופכים למובילי השינוי</li>
+                            <li>✨ החזון לעתיד של הצגת מידע</li>
+                        </ul>
+                    </div>
+                    <p style="text-align: center; font-size: 1.5rem; color: #FF006E; margin-top: 3rem;">
+                        <strong>הנרי שטאובר</strong><br>
+                        יוצר תוכן ויועץ בבינה מלאכותית
+                    </p>
+                `
+            },
+            2: {
+                color: '#8338EC',
+                title: 'המסע ההיסטורי של העברת המידע',
+                content: `
+                    <h1 style="font-size: 3rem; margin-bottom: 2rem; color: #8338EC;">המסע ההיסטורי</h1>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;">
+                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
+                            <h3 style="color: #8338EC;">🎨 עידן היצירתיות הקדומה</h3>
+                            <ul style="list-style: none; padding: 0; margin-top: 1rem;">
+                                <li>🪢 קיפו האינקית - מערכת קשרים צבעוניים</li>
+                                <li>𓂀 כתב חרתומים - סיפורים חיים על הקירות</li>
+                                <li>🪙 מטבעות - הרשת החברתית הקדומה</li>
+                                <li>🎨 ציורי מערות - העיתונות הקדמונית</li>
+                            </ul>
+                        </div>
+                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
+                            <h3 style="color: #8338EC;">📜 עידן המילה הכתובה</h3>
+                            <p>המהפכה הראשונה - הסטנדרטיזציה</p>
+                            <p style="color: #66ff66;">✅ הרווחנו: יעילות, נגישות, שחזור</p>
+                            <p style="color: #ff6666;">❌ איבדנו: יצירתיות, ייחודיות, קסם</p>
+                        </div>
+                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
+                            <h3 style="color: #8338EC;">💻 העידן הדיגיטלי</h3>
+                            <p>העברנו את הנייר למסכים</p>
+                            <p>חיפוש מהיר, אחסון אינסופי</p>
+                            <p style="color: #ffaa00;">⚠️ אבל המהות נשארה - עדיין מילים בשורות</p>
+                        </div>
+                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
+                            <h3 style="color: #8338EC;">🤖 מהפכת ה-AI</h3>
+                            <p>החזרה ליצירתיות - עם כוח על!</p>
+                            <p>🎬 וידאו דינמי</p>
+                            <p>🎙️ פודקאסט חכם</p>
+                            <p>🎮 משחקים לימודיים</p>
+                            <p>🌟 חוויות אינטראקטיביות</p>
+                        </div>
+                    </div>
+                `
+            },
+            3: {
+                color: '#3A86FF',
+                title: 'הכלים שמשנים הכל',
+                content: `
+                    <h1 style="font-size: 3rem; margin-bottom: 2rem; color: #3A86FF;">4 כלים מהפכניים</h1>
+                    <div style="display: grid; gap: 2rem;">
+                        <div style="background: linear-gradient(135deg, rgba(255,0,110,0.1), rgba(255,0,110,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #FF006E;">
+                            <h2 style="color: #FF006E;">🎙️ NotebookLM</h2>
+                            <p style="font-size: 1.2rem;">הופך מסמכים לפודקאסטים מרתקים</p>
+                            <ul style="margin-top: 1rem;">
+                                <li>דוח של 80 עמודים → פודקאסט של 25 דקות</li>
+                                <li>שני מנחים וירטואליים מנתחים את התוכן</li>
+                                <li>נגישות מקסימלית למידע מורכב</li>
+                            </ul>
+                        </div>
+                        <div style="background: linear-gradient(135deg, rgba(131,56,236,0.1), rgba(131,56,236,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #8338EC;">
+                            <h2 style="color: #8338EC;">📊 Flourish</h2>
+                            <p style="font-size: 1.2rem;">הופך נתונים לסיפורים ויזואליים</p>
+                            <ul style="margin-top: 1rem;">
+                                <li>ויזואליזציות אינטראקטיביות מרהיבות</li>
+                                <li>המשתמש יכול "לשחק" עם הנתונים</li>
+                                <li>תבניות מוכנות לכל סוג מידע</li>
+                            </ul>
+                        </div>
+                        <div style="background: linear-gradient(135deg, rgba(58,134,255,0.1), rgba(58,134,255,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #3A86FF;">
+                            <h2 style="color: #3A86FF;">🤖 Claude Artifacts</h2>
+                            <p style="font-size: 1.2rem;">יוצר תוכן אינטראקטיבי בזמן אמת</p>
+                            <ul style="margin-top: 1rem;">
+                                <li>סימולטורים להדרכה</li>
+                                <li>משחקי למידה מותאמים אישית</li>
+                                <li>כלי עבודה דינמיים</li>
+                            </ul>
+                        </div>
+                        <div style="background: linear-gradient(135deg, rgba(6,255,165,0.1), rgba(6,255,165,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #06FFA5;">
+                            <h2 style="color: #06FFA5;">🔍 GenSpark</h2>
+                            <p style="font-size: 1.2rem;">מנוע חיפוש שיוצר חוויות</p>
+                            <ul style="margin-top: 1rem;">
+                                <li>דפי נחיתה מיוחדים לכל חיפוש</li>
+                                <li>סיכום ויזואלי של כל המקורות</li>
+                                <li>קשרים וחיבורים בין נושאים</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            },
+            4: {
+                color: '#06FFA5',
+                title: 'החזרה למעגל המלא',
+                content: `
+                    <h1 style="font-size: 3rem; margin-bottom: 2rem; background: linear-gradient(135deg, #06FFA5 0%, #FFB700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">הזמן שלכם לזרוח</h1>
+                    <div style="text-align: center; margin-bottom: 3rem;">
+                        <p style="font-size: 1.5rem; line-height: 1.8;">
+                            כמו האינקים עם הקיפו שלהם, כמו המצרים עם החרתומים -<br>
+                            עכשיו גם אנחנו יכולים להפוך מידע לחוויה, לסיפור, לדבר חי.
+                        </p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 3rem;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; text-align: center;">
+                            <h2 style="color: #FF006E; font-size: 3rem;">1</h2>
+                            <h3 style="color: #FF006E;">חקרו</h3>
+                            <p>נסו את הכלים<br>התחילו קטן<br>למדו מהניסיון</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; text-align: center;">
+                            <h2 style="color: #8338EC; font-size: 3rem;">2</h2>
+                            <h3 style="color: #8338EC;">יישמו</h3>
+                            <p>בחרו פרויקט<br>הפכו תוכן קיים<br>הראו תוצאות</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; text-align: center;">
+                            <h2 style="color: #06FFA5; font-size: 3rem;">3</h2>
+                            <h3 style="color: #06FFA5;">הובילו</h3>
+                            <p>חלקו תובנות<br>הציעו חדשנות<br>הפכו לנציגי השינוי</p>
+                        </div>
+                    </div>
+                    <div style="text-align: center; padding: 3rem; background: rgba(6,255,165,0.1); border-radius: 30px;">
+                        <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: #06FFA5;">
+                            ״המידע תמיד היה כוח.<br>
+                            עכשיו יש לנו את הכוח להפוך אותו לכל דבר שנחלום עליו.״
+                        </h2>
+                        <p style="font-size: 2rem; color: #FFB700; font-weight: bold;">
+                            מה תבחרו ליצור? 🚀
+                        </p>
+                    </div>
+                `
+            }
+        };
+
+        // Initialize canvas position
+        function initCanvas() {
+            navigateToIsland(1);
+            updateMinimap();
+        }
+
+        // Navigate to specific island
+        function navigateToIsland(islandNum) {
+            if (islandNum < 1 || islandNum > totalIslands) return;
+            
+            currentIsland = islandNum;
+            const island = document.getElementById(`island${islandNum}`);
+            const rect = island.getBoundingClientRect();
+            const canvas = document.getElementById('canvas');
+            
+            // Calculate center position (adjusted for RTL)
+            const targetX = -island.offsetLeft + window.innerWidth / 2 - island.offsetWidth / 2;
+            const targetY = -island.offsetTop + window.innerHeight / 2 - island.offsetHeight / 2;
+            
+            canvas.style.transform = `translate(${targetX}px, ${targetY}px)`;
+            
+            // Update active state
+            document.querySelectorAll('.island').forEach(i => i.classList.remove('active'));
+            island.classList.add('active');
+            
+            // Update progress bar (RTL - width represents progress from right)
+            const progress = (currentIsland / totalIslands) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            updateMinimap();
+        }
+
+        // Update minimap viewport
+        function updateMinimap() {
+            const canvas = document.getElementById('canvas');
+            const viewport = document.getElementById('minimapViewport');
+            const transform = canvas.style.transform;
+            const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
+            
+            if (match) {
+                const x = parseFloat(match[1]);
+                const y = parseFloat(match[2]);
+                
+                // Scale down for minimap (RTL adjusted)
+                const minimapX = Math.abs(x) / 25;
+                const minimapY = Math.abs(y) / 25;
+                
+                viewport.style.right = minimapX + 'px';
+                viewport.style.top = minimapY + 'px';
+                viewport.style.width = (window.innerWidth / 25) + 'px';
+                viewport.style.height = (window.innerHeight / 25) + 'px';
+            }
+        }
+
+        // Open fullscreen modal
+        function openFullscreen(islandNum) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+            const modalBody = document.getElementById('modalBody');
+            const content = islandFullContent[islandNum];
+            
+            modalContent.style.setProperty('--modal-color', content.color);
+            modalBody.innerHTML = content.content;
+            modal.classList.add('active');
+        }
+
+        // Close fullscreen modal
+        function closeFullscreen() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('active');
+        }
+
+        // Toggle auto-play
+        function toggleAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+                document.querySelector('.nav-btn:nth-child(2)').textContent = '▶ הפעל';
+            } else {
+                autoPlayInterval = setInterval(() => {
+                    const nextIsland = currentIsland === totalIslands ? 1 : currentIsland + 1;
+                    navigateToIsland(nextIsland);
+                }, 8000);
+                document.querySelector('.nav-btn:nth-child(2)').textContent = '⏸ השהה';
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initCanvas();
+            
+            // Island click handlers
+            document.querySelectorAll('.island').forEach(island => {
+                island.addEventListener('click', (e) => {
+                    const islandNum = parseInt(island.dataset.island);
+                    openFullscreen(islandNum);
+                });
+            });
+            
+            // Keyboard navigation (RTL adjusted)
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowRight': // Right arrow = previous (RTL)
+                        navigateToIsland(currentIsland > 1 ? currentIsland - 1 : totalIslands);
+                        break;
+                    case 'ArrowLeft': // Left arrow = next (RTL)
+                        navigateToIsland(currentIsland < totalIslands ? currentIsland + 1 : 1);
+                        break;
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                        navigateToIsland(parseInt(e.key));
+                        break;
+                    case 'Escape':
+                        closeFullscreen();
+                        break;
+                    case 'f':
+                    case 'F':
+                        if (!document.fullscreenElement) {
+                            document.documentElement.requestFullscreen();
+                        } else {
+                            document.exitFullscreen();
+                        }
+                        break;
+                    case 'p':
+                    case 'P':
+                        toggleAutoPlay();
+                        break;
+                }
+            });
+            
+            // Modal close on background click
+            document.getElementById('modal').addEventListener('click', (e) => {
+                if (e.target.id === 'modal') {
+                    closeFullscreen();
+                }
+            });
+            
+            // Touch support for mobile
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const deltaX = touchEndX - touchStartX;
+                
+                // Swipe detection (RTL adjusted)
+                if (Math.abs(deltaX) > 50) {
+                    if (deltaX > 0) {
+                        // Swipe right = previous (RTL)
+                        navigateToIsland(currentIsland > 1 ? currentIsland - 1 : totalIslands);
+                    } else {
+                        // Swipe left = next (RTL)
+                        navigateToIsland(currentIsland < totalIslands ? currentIsland + 1 : 1);
+                    }
+                }
+            });
+            
+            // Window resize handler
+            window.addEventListener('resize', () => {
+                navigateToIsland(currentIsland);
+            });
+        });
+    </script>
+</body>
+</html>
