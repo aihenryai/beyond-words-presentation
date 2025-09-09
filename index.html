@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מעבר למילים - מצגת אינטראקטיבית | הנרי שטאובר</title>
+    <meta name="description" content="איך בינה מלאכותית חושפת תובנות מהמידע - מצגת אינטראקטיבית מאת הנרי שטאובר">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap');
         
@@ -22,16 +24,16 @@
             direction: rtl;
         }
 
-        /* Canvas Container */
+        /* Canvas Container - Larger for better navigation */
         #canvas {
             position: relative;
-            width: 5000px;
-            height: 3000px;
+            width: 8000px;
+            height: 4500px;
             background: radial-gradient(circle at 50% 50%, #1a1a3e 0%, #0a0a0a 100%);
             transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Grid Background */
+        /* Enhanced Grid Background with Glow */
         #canvas::before {
             content: '';
             position: absolute;
@@ -46,67 +48,138 @@
             pointer-events: none;
         }
 
-        /* Islands (Slides) */
+        /* Animated Particles Background */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(138, 43, 226, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+            animation: particleFloat 15s infinite ease-in-out;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-200px) translateX(100px);
+            }
+        }
+
+        /* Larger, More Impressive Islands */
         .island {
             position: absolute;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.05);
+            border-radius: 40px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
             backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            padding: 3rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 4rem;
             transition: all 0.5s ease;
             cursor: pointer;
             overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .island::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--island-color) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
         }
 
         .island:hover {
-            transform: scale(1.05);
+            transform: scale(1.05) translateY(-10px);
             border-color: var(--island-color);
-            box-shadow: 0 0 100px rgba(138, 43, 226, 0.3);
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.4),
+                0 0 100px rgba(var(--island-rgb), 0.3),
+                inset 0 0 60px rgba(var(--island-rgb), 0.1);
+        }
+
+        .island:hover::before {
+            opacity: 0.15;
         }
 
         .island.active {
             border-color: var(--island-color);
-            box-shadow: 0 0 150px var(--island-color);
+            box-shadow: 
+                0 30px 100px rgba(0, 0, 0, 0.5),
+                0 0 150px rgba(var(--island-rgb), 0.4),
+                inset 0 0 80px rgba(var(--island-rgb), 0.15);
+            animation: islandPulse 3s ease infinite;
         }
 
-        /* Island 1 - Opening (Right side for RTL) */
+        @keyframes islandPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Island 1 - Opening (Larger and centered) */
         #island1 {
             --island-color: #FF006E;
-            right: 500px;
-            top: 1200px;
-            width: 600px;
-            height: 400px;
+            --island-rgb: 255, 0, 110;
+            right: 3000px;
+            top: 1800px;
+            width: 900px;
+            height: 600px;
         }
 
-        /* Island 2 - Historical Journey (Left of Island 1) */
+        /* Island 2 - Historical Journey (Larger) */
         #island2 {
             --island-color: #8338EC;
-            right: 1500px;
-            top: 1000px;
-            width: 700px;
-            height: 500px;
+            --island-rgb: 131, 56, 236;
+            right: 4500px;
+            top: 1500px;
+            width: 1000px;
+            height: 700px;
         }
 
-        /* Island 3 - Tools (More to the left) */
+        /* Island 3 - Tools (Largest - main content) */
         #island3 {
             --island-color: #3A86FF;
-            right: 2600px;
-            top: 1300px;
-            width: 800px;
-            height: 450px;
+            --island-rgb: 58, 134, 255;
+            right: 6200px;
+            top: 2000px;
+            width: 1200px;
+            height: 650px;
         }
 
-        /* Island 4 - Summary (Bottom center) */
+        /* Island 4 - Summary (Impact island) */
         #island4 {
             --island-color: #06FFA5;
-            right: 1800px;
-            top: 2000px;
-            width: 650px;
-            height: 400px;
+            --island-rgb: 6, 255, 165;
+            right: 4700px;
+            top: 3000px;
+            width: 950px;
+            height: 600px;
         }
 
-        /* Island Content */
+        /* Enhanced Island Content */
         .island-content {
             height: 100%;
             display: flex;
@@ -114,101 +187,200 @@
             justify-content: center;
             align-items: center;
             text-align: center;
+            position: relative;
+            z-index: 2;
         }
 
         .island-title {
-            font-size: 2.5rem;
+            font-size: 3.5rem;
             font-weight: 900;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             background: linear-gradient(135deg, var(--island-color) 0%, #fff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(var(--island-rgb), 0.5);
+            animation: titleGlow 3s ease infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
         }
 
         .island-subtitle {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
             margin-bottom: 2rem;
+            max-width: 80%;
         }
 
         .island-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 0 20px var(--island-color));
+            animation: iconFloat 4s ease-in-out infinite;
         }
 
-        /* Minimap (Left side for RTL) */
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .island-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+            width: 90%;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            border-color: var(--island-color);
+        }
+
+        /* Enhanced Minimap */
         .minimap {
             position: fixed;
             bottom: 20px;
             left: 20px;
-            width: 200px;
-            height: 120px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+            width: 250px;
+            height: 150px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(138, 43, 226, 0.1));
+            border: 2px solid rgba(138, 43, 226, 0.3);
+            border-radius: 15px;
             z-index: 1000;
             overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .minimap-islands {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .minimap-island {
+            position: absolute;
+            background: var(--island-color);
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .minimap-island.active {
+            opacity: 1;
+            transform: scale(1.5);
+            box-shadow: 0 0 20px var(--island-color);
         }
 
         .minimap-viewport {
             position: absolute;
-            background: rgba(138, 43, 226, 0.3);
-            border: 2px solid #8338EC;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(138, 43, 226, 0.8);
             pointer-events: none;
             transition: all 0.3s ease;
         }
 
-        /* Navigation Controls */
+        /* Enhanced Navigation Controls */
         .nav-controls {
             position: fixed;
             bottom: 20px;
             right: 50%;
             transform: translateX(50%);
             display: flex;
-            gap: 15px;
+            gap: 20px;
             z-index: 1000;
             direction: ltr;
         }
 
         .nav-btn {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             color: #fff;
-            padding: 1rem 2rem;
+            padding: 1.2rem 2.5rem;
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 700;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(138, 43, 226, 0.6), transparent);
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
         }
 
         .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
+            border-color: #8338EC;
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.3);
         }
 
-        /* Progress Bar (RTL - fills from right to left) */
-        .progress-bar {
+        .nav-btn:hover::before {
+            width: 150%;
+            height: 150%;
+        }
+
+        /* Enhanced Progress Bar */
+        .progress-container {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.1);
             z-index: 1000;
-            direction: ltr;
         }
 
-        .progress-fill {
+        .progress-bar {
             height: 100%;
             background: linear-gradient(90deg, #FF006E 0%, #8338EC 25%, #3A86FF 50%, #06FFA5 100%);
             width: 25%;
             float: right;
             transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Fullscreen Modal */
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+            animation: progressShine 2s ease infinite;
+        }
+
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Enhanced Fullscreen Modal */
         .modal {
             display: none;
             position: fixed;
@@ -228,118 +400,259 @@
             display: flex;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         .modal-content {
-            width: 90%;
-            max-width: 1200px;
+            width: 95%;
+            max-width: 1400px;
             height: 90%;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            border-radius: 30px;
-            border: 2px solid var(--modal-color);
-            padding: 3rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 40px;
+            border: 3px solid var(--modal-color);
+            padding: 4rem;
             position: relative;
             overflow-y: auto;
+            overflow-x: hidden;
             animation: slideIn 0.5s ease;
+            box-shadow: 
+                0 30px 100px rgba(0, 0, 0, 0.5),
+                0 0 200px rgba(var(--modal-rgb), 0.3);
         }
 
-        @keyframes slideIn {
-            from { transform: scale(0.8) translateY(50px); }
-            to { transform: scale(1) translateY(0); }
+        /* Custom Scrollbar */
+        .modal-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--modal-color);
+            border-radius: 10px;
         }
 
         .modal-close {
             position: absolute;
             top: 2rem;
             left: 2rem;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             transition: all 0.3s ease;
+            z-index: 10;
         }
 
         .modal-close:hover {
             background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
+            transform: scale(1.1) rotate(90deg);
+            border-color: var(--modal-color);
         }
 
-        /* Instructions Panel */
+        /* Enhanced Instructions Panel */
         .instructions {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            padding: 1rem;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(138, 43, 226, 0.1));
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 2px solid rgba(138, 43, 226, 0.3);
             z-index: 1000;
-            font-size: 0.9rem;
-            max-width: 250px;
+            font-size: 0.95rem;
+            max-width: 280px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .instructions:hover {
+            border-color: rgba(138, 43, 226, 0.6);
+            transform: translateY(-5px);
         }
 
         .instructions h3 {
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
             color: #8338EC;
+            font-size: 1.2rem;
         }
 
-        .instructions ul {
-            list-style: none;
-            padding: 0;
+        /* Tool Cards in Modal */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
         }
 
-        .instructions li {
-            margin-bottom: 0.3rem;
-            color: rgba(255, 255, 255, 0.8);
+        .tool-card {
+            background: linear-gradient(135deg, rgba(var(--tool-rgb), 0.1), rgba(var(--tool-rgb), 0.05));
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 2px solid rgba(var(--tool-rgb), 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Responsive adjustments */
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(var(--tool-rgb), 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(var(--tool-rgb), 0.6);
+            box-shadow: 0 20px 50px rgba(var(--tool-rgb), 0.2);
+        }
+
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Contact Links */
+        .contact-section {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(138, 43, 226, 0.1));
+            border: 2px solid rgba(138, 43, 226, 0.3);
+            border-radius: 50px;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .contact-link:hover {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.3), rgba(138, 43, 226, 0.2));
+            border-color: #8338EC;
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                padding: 3rem 2rem;
+            }
+        }
+
         @media (max-width: 768px) {
             .island-title {
-                font-size: 1.8rem;
+                font-size: 2.5rem;
             }
             
             .island-subtitle {
-                font-size: 1rem;
+                font-size: 1.2rem;
             }
             
             .nav-controls {
                 flex-direction: column;
                 gap: 10px;
+                bottom: 80px;
             }
             
             .instructions {
                 display: none;
             }
+            
+            .minimap {
+                width: 150px;
+                height: 90px;
+            }
+            
+            .modal-content {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(138, 43, 226, 0.1);
+            border-top-color: #8338EC;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Particles Background -->
+    <div class="particles-container" id="particlesContainer"></div>
+
     <!-- Progress Bar -->
-    <div class="progress-bar">
-        <div class="progress-fill" id="progressBar"></div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
     </div>
 
     <!-- Instructions Panel -->
     <div class="instructions">
-        <h3>🎮 הוראות שימוש</h3>
-        <ul>
-            <li>🖱️ <strong>לחיצה על תחנה</strong> - מסך מלא</li>
-            <li>⌨️ <strong>חיצים</strong> - ניווט במצגת</li>
-            <li>⌨️ <strong>1-4</strong> - קפיצה לתחנה</li>
-            <li>⌨️ <strong>F</strong> - מסך מלא דפדפן</li>
-            <li>⌨️ <strong>P</strong> - הפעלת אוטומטית</li>
-            <li>⌨️ <strong>ESC</strong> - יציאה</li>
+        <h3>🎮 ניווט במצגת</h3>
+        <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 0.5rem;">🖱️ <strong>לחיצה על תחנה</strong> - תוכן מלא</li>
+            <li style="margin-bottom: 0.5rem;">⌨️ <strong>חיצים ימין/שמאל</strong> - ניווט</li>
+            <li style="margin-bottom: 0.5rem;">⌨️ <strong>מקשים 1-4</strong> - קפיצה ישירה</li>
+            <li style="margin-bottom: 0.5rem;">⌨️ <strong>F</strong> - מסך מלא</li>
+            <li style="margin-bottom: 0.5rem;">⌨️ <strong>P</strong> - הפעלה אוטומטית</li>
+            <li style="margin-bottom: 0.5rem;">⌨️ <strong>ESC</strong> - יציאה מתצוגה</li>
+            <li style="margin-bottom: 0.5rem;">👆 <strong>גרירה</strong> - תנועה חופשית</li>
         </ul>
     </div>
 
@@ -350,8 +663,22 @@
             <div class="island-content">
                 <div class="island-icon">🚀</div>
                 <h2 class="island-title">מעבר למילים</h2>
-                <p class="island-subtitle">איך בינה מלאכותית חושפת תובנות מהמידע</p>
-                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">הנרי שטאובר | יוצר תוכן ויועץ AI</p>
+                <p class="island-subtitle">איך בינה מלאכותית חושפת תובנות מהמידע ומשנה את הדרך שבה אנחנו מתקשרים</p>
+                <div class="island-details">
+                    <div class="detail-item">
+                        <strong>משך:</strong> 30 דקות
+                    </div>
+                    <div class="detail-item">
+                        <strong>קהל יעד:</strong> מידענים
+                    </div>
+                    <div class="detail-item">
+                        <strong>סגנון:</strong> אינטראקטיבי
+                    </div>
+                </div>
+                <p style="margin-top: 2rem; font-size: 1.2rem; color: rgba(255,255,255,0.8);">
+                    <strong>הנרי שטאובר</strong><br>
+                    יוצר תוכן ויועץ בבינה מלאכותית
+                </p>
             </div>
         </div>
 
@@ -360,8 +687,28 @@
             <div class="island-content">
                 <div class="island-icon">🎨</div>
                 <h2 class="island-title">המסע ההיסטורי</h2>
-                <p class="island-subtitle">מציורי מערות ועד בינה מלאכותית</p>
-                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">4 עידנים של העברת מידע</p>
+                <p class="island-subtitle">10,000 שנים של חיפוש אחר דרכים יצירתיות להעביר מידע</p>
+                <div class="island-details">
+                    <div class="detail-item">
+                        <strong>🪢 קיפו האינקית</strong><br>
+                        מערכת קשרים מתוחכמת
+                    </div>
+                    <div class="detail-item">
+                        <strong>𓂀 חרתומים</strong><br>
+                        תמונות שמספרות סיפורים
+                    </div>
+                    <div class="detail-item">
+                        <strong>💻 דיגיטל</strong><br>
+                        מהנייר למסכים
+                    </div>
+                    <div class="detail-item">
+                        <strong>🤖 AI</strong><br>
+                        חזרה ליצירתיות
+                    </div>
+                </div>
+                <p style="margin-top: 2rem; text-align: center; font-size: 1.1rem;">
+                    "המעגל המלא - מיצירתיות עתיקה לטכנולוגיה עתידנית"
+                </p>
             </div>
         </div>
 
@@ -369,9 +716,29 @@
         <div class="island" id="island3" data-island="3">
             <div class="island-content">
                 <div class="island-icon">🛠️</div>
-                <h2 class="island-title">הכלים שמשנים הכל</h2>
-                <p class="island-subtitle">NotebookLM | Flourish | Claude | GenSpark</p>
-                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">טכנולוגיות שהופכות מידע לחוויה</p>
+                <h2 class="island-title">4 הכלים שמשנים הכל</h2>
+                <p class="island-subtitle">טכנולוגיות מהפכניות שהופכות מידע לחוויה בלתי נשכחת</p>
+                <div class="island-details">
+                    <div class="detail-item" style="background: rgba(255, 0, 110, 0.1); border-color: rgba(255, 0, 110, 0.3);">
+                        <strong>🎙️ NotebookLM</strong><br>
+                        מסמכים לפודקאסטים
+                    </div>
+                    <div class="detail-item" style="background: rgba(131, 56, 236, 0.1); border-color: rgba(131, 56, 236, 0.3);">
+                        <strong>📊 Flourish</strong><br>
+                        נתונים לסיפורים
+                    </div>
+                    <div class="detail-item" style="background: rgba(58, 134, 255, 0.1); border-color: rgba(58, 134, 255, 0.3);">
+                        <strong>🤖 Claude</strong><br>
+                        רעיונות לאפליקציות
+                    </div>
+                    <div class="detail-item" style="background: rgba(6, 255, 165, 0.1); border-color: rgba(6, 255, 165, 0.3);">
+                        <strong>🔍 GenSpark</strong><br>
+                        חיפוש לחוויה
+                    </div>
+                </div>
+                <p style="margin-top: 2rem; text-align: center; font-size: 1.2rem; color: #3A86FF;">
+                    לחץ לסקירה מפורטת של כל כלי
+                </p>
             </div>
         </div>
 
@@ -379,23 +746,45 @@
         <div class="island" id="island4" data-island="4">
             <div class="island-content">
                 <div class="island-icon">✨</div>
-                <h2 class="island-title">החזרה למעגל המלא</h2>
-                <p class="island-subtitle">מה תבחרו ליצור?</p>
-                <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">הזמן שלכם לזרוח</p>
+                <h2 class="island-title">הזמן שלכם לזרוח</h2>
+                <p class="island-subtitle">איך אתם הופכים למובילי המהפכה בארגון שלכם</p>
+                <div class="island-details">
+                    <div class="detail-item" style="background: rgba(255, 0, 110, 0.1);">
+                        <strong>1️⃣ חקרו</strong><br>
+                        התחילו עם כלי אחד
+                    </div>
+                    <div class="detail-item" style="background: rgba(131, 56, 236, 0.1);">
+                        <strong>2️⃣ יישמו</strong><br>
+                        פרויקט פיילוט קטן
+                    </div>
+                    <div class="detail-item" style="background: rgba(6, 255, 165, 0.1);">
+                        <strong>3️⃣ הובילו</strong><br>
+                        שתפו והרחיבו
+                    </div>
+                </div>
+                <p style="margin-top: 2rem; font-size: 1.5rem; text-align: center; color: #06FFA5;">
+                    <strong>"מה תבחרו ליצור היום?"</strong>
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Minimap -->
+    <!-- Enhanced Minimap -->
     <div class="minimap">
+        <div class="minimap-islands">
+            <div class="minimap-island active" style="--island-color: #FF006E; right: 37%; top: 40%;"></div>
+            <div class="minimap-island" style="--island-color: #8338EC; right: 56%; top: 33%;"></div>
+            <div class="minimap-island" style="--island-color: #3A86FF; right: 77%; top: 44%;"></div>
+            <div class="minimap-island" style="--island-color: #06FFA5; right: 59%; top: 67%;"></div>
+        </div>
         <div class="minimap-viewport" id="minimapViewport"></div>
     </div>
 
     <!-- Navigation Controls -->
     <div class="nav-controls">
-        <button class="nav-btn" onclick="navigateToIsland(2)">⬅ הבא</button>
-        <button class="nav-btn" onclick="toggleAutoPlay()">▶ הפעל</button>
-        <button class="nav-btn" onclick="navigateToIsland(4)">➡ הקודם</button>
+        <button class="nav-btn" onclick="navigateToIsland(currentIsland > 1 ? currentIsland - 1 : totalIslands)">⬅ הקודם</button>
+        <button class="nav-btn" onclick="toggleAutoPlay()" id="autoPlayBtn">▶ הפעל אוטומטית</button>
+        <button class="nav-btn" onclick="navigateToIsland(currentIsland < totalIslands ? currentIsland + 1 : 1)">הבא ➡</button>
     </div>
 
     <!-- Fullscreen Modal -->
@@ -411,150 +800,453 @@
         let currentIsland = 1;
         let autoPlayInterval = null;
         const totalIslands = 4;
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let canvasPosition = { x: 0, y: 0 };
+
+        // Create particles
+        function createParticles() {
+            const container = document.getElementById('particlesContainer');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
 
         // Island content for fullscreen mode
         const islandFullContent = {
             1: {
                 color: '#FF006E',
+                rgb: '255, 0, 110',
                 title: 'מעבר למילים: איך בינה מלאכותית חושפת תובנות מהמידע',
                 content: `
-                    <h1 style="font-size: 3rem; margin-bottom: 2rem; background: linear-gradient(135deg, #FF006E 0%, #8338EC 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">מעבר למילים</h1>
-                    <h2 style="color: #FF006E; margin-bottom: 2rem;">המהפכה השקטה של המידע</h2>
-                    <p style="font-size: 1.3rem; line-height: 1.8; margin-bottom: 2rem;">האנושות תמיד חיפשה דרכים יצירתיות להעביר מידע. היום, בעידן הבינה המלאכותית, אנחנו חוזרים לשורשים היצירתיים - אבל עם כוח על.</p>
-                    <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; margin: 2rem 0;">
-                        <h3 style="color: #FF006E; margin-bottom: 1rem;">במסע הזה נגלה:</h3>
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="margin-bottom: 1rem;">🎨 איך האנושות העבירה מידע לאורך ההיסטוריה</li>
-                            <li style="margin-bottom: 1rem;">🚀 4 כלים מהפכניים שמשנים את המשחק</li>
-                            <li style="margin-bottom: 1rem;">💡 איך אתם הופכים למובילי השינוי</li>
-                            <li>✨ החזון לעתיד של הצגת מידע</li>
-                        </ul>
+                    <h1 style="font-size: 4rem; margin-bottom: 3rem; background: linear-gradient(135deg, #FF006E 0%, #8338EC 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center;">מעבר למילים</h1>
+                    
+                    <div style="text-align: center; margin-bottom: 3rem;">
+                        <p style="font-size: 1.8rem; line-height: 1.8; color: rgba(255,255,255,0.9);">
+                            המהפכה השקטה של המידע כבר כאן.<br>
+                            הצטרפו למסע מרתק דרך 4 עידנים של העברת מידע,<br>
+                            וגלו איך אתם יכולים להוביל את השינוי בארגון שלכם.
+                        </p>
                     </div>
-                    <p style="text-align: center; font-size: 1.5rem; color: #FF006E; margin-top: 3rem;">
-                        <strong>הנרי שטאובר</strong><br>
-                        יוצר תוכן ויועץ בבינה מלאכותית
-                    </p>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 3rem; margin-bottom: 3rem;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 2.5rem; border-radius: 20px; border: 2px solid rgba(255, 0, 110, 0.3);">
+                            <h3 style="color: #FF006E; margin-bottom: 1.5rem; font-size: 1.8rem;">🎯 מה נלמד היום</h3>
+                            <ul style="list-style: none; padding: 0; font-size: 1.2rem; line-height: 2;">
+                                <li>🎨 המסע ההיסטורי של העברת מידע</li>
+                                <li>🚀 4 כלים מהפכניים שמשנים את המשחק</li>
+                                <li>💡 איך להפוך מידע משעמם לחוויה מרתקת</li>
+                                <li>✨ צעדים מעשיים להטמעה בארגון</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.05); padding: 2.5rem; border-radius: 20px; border: 2px solid rgba(131, 56, 236, 0.3);">
+                            <h3 style="color: #8338EC; margin-bottom: 1.5rem; font-size: 1.8rem;">👥 למי זה מיועד</h3>
+                            <ul style="list-style: none; padding: 0; font-size: 1.2rem; line-height: 2;">
+                                <li>📚 מידענים ומנהלי מידע</li>
+                                <li>🏢 מנהלי ידע בארגונים</li>
+                                <li>📊 אנליסטים ומציגי נתונים</li>
+                                <li>🎓 כל מי שרוצה להשפיע עם מידע</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, rgba(255, 0, 110, 0.1), rgba(138, 43, 226, 0.1)); padding: 3rem; border-radius: 30px; text-align: center;">
+                        <p style="font-size: 1.5rem; margin-bottom: 1rem; color: #FF006E;">
+                            "האנושות תמיד חיפשה דרכים יצירתיות להעביר מידע.<br>
+                            היום, אנחנו חוזרים לשורשים - אבל עם כוח על."
+                        </p>
+                        <p style="font-size: 1.8rem; margin-top: 2rem;">
+                            <strong>הנרי שטאובר</strong><br>
+                            <span style="font-size: 1.2rem; color: rgba(255,255,255,0.8);">יוצר תוכן ויועץ בבינה מלאכותית</span>
+                        </p>
+                    </div>
+
+                    <div class="contact-section">
+                        <a href="https://www.youtube.com/@HenryAI" target="_blank" class="contact-link">
+                            🎥 ערוץ YouTube
+                        </a>
+                        <a href="mailto:henry@example.com" class="contact-link">
+                            ✉️ יצירת קשר
+                        </a>
+                        <a href="#" class="contact-link">
+                            🎓 הזמנת סדנה
+                        </a>
+                    </div>
                 `
             },
             2: {
                 color: '#8338EC',
+                rgb: '131, 56, 236',
                 title: 'המסע ההיסטורי של העברת המידע',
                 content: `
-                    <h1 style="font-size: 3rem; margin-bottom: 2rem; color: #8338EC;">המסע ההיסטורי</h1>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;">
-                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
-                            <h3 style="color: #8338EC;">🎨 עידן היצירתיות הקדומה</h3>
-                            <ul style="list-style: none; padding: 0; margin-top: 1rem;">
-                                <li>🪢 קיפו האינקית - מערכת קשרים צבעוניים</li>
-                                <li>𓂀 כתב חרתומים - סיפורים חיים על הקירות</li>
-                                <li>🪙 מטבעות - הרשת החברתית הקדומה</li>
-                                <li>🎨 ציורי מערות - העיתונות הקדמונית</li>
-                            </ul>
+                    <h1 style="font-size: 3.5rem; margin-bottom: 3rem; color: #8338EC; text-align: center;">המסע ההיסטורי</h1>
+                    
+                    <div style="text-align: center; margin-bottom: 3rem;">
+                        <p style="font-size: 1.5rem; line-height: 1.8;">
+                            מציורי מערות ועד בינה מלאכותית - סיפור של 10,000 שנים<br>
+                            של חיפוש אחר הדרך המושלמת להעביר מידע
+                        </p>
+                    </div>
+
+                    <div style="display: grid; gap: 2.5rem;">
+                        <!-- Era 1 -->
+                        <div style="background: linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(139, 69, 19, 0.05)); padding: 3rem; border-radius: 25px; border: 2px solid rgba(139, 69, 19, 0.3);">
+                            <h2 style="color: #8B4513; font-size: 2rem; margin-bottom: 1.5rem;">🎨 עידן היצירתיות הקדומה</h2>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+                                <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px;">
+                                    <h4 style="color: #FFB700;">🪢 קיפו האינקית</h4>
+                                    <p>מערכת קשרים צבעוניים שהעבירה מידע מורכב - האקסל הקדום!</p>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px;">
+                                    <h4 style="color: #FFB700;">𓂀 כתב חרתומים</h4>
+                                    <p>תמונות שמספרות סיפורים - כל סמל נשא משמעות מרובה</p>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px;">
+                                    <h4 style="color: #FFB700;">🎨 ציורי מערות</h4>
+                                    <p>העיתונות הקדמונית - פרסום מידע על ציד ואירועים</p>
+                                </div>
+                            </div>
                         </div>
-                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
-                            <h3 style="color: #8338EC;">📜 עידן המילה הכתובה</h3>
-                            <p>המהפכה הראשונה - הסטנדרטיזציה</p>
-                            <p style="color: #66ff66;">✅ הרווחנו: יעילות, נגישות, שחזור</p>
-                            <p style="color: #ff6666;">❌ איבדנו: יצירתיות, ייחודיות, קסם</p>
+
+                        <!-- Era 2 -->
+                        <div style="background: linear-gradient(135deg, rgba(100, 100, 100, 0.1), rgba(100, 100, 100, 0.05)); padding: 3rem; border-radius: 25px; border: 2px solid rgba(100, 100, 100, 0.3);">
+                            <h2 style="color: #666; font-size: 2rem; margin-bottom: 1.5rem;">📜 עידן המילה הכתובה</h2>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;">
+                                <div style="background: rgba(102, 255, 102, 0.1); padding: 2rem; border-radius: 15px;">
+                                    <h4 style="color: #66ff66;">✅ מה הרווחנו</h4>
+                                    <ul style="list-style: none; padding: 0;">
+                                        <li>• סטנדרטיזציה של מידע</li>
+                                        <li>• נגישות רחבה יותר</li>
+                                        <li>• יכולת שחזור מדויקת</li>
+                                        <li>• הפצה המונית</li>
+                                    </ul>
+                                </div>
+                                <div style="background: rgba(255, 102, 102, 0.1); padding: 2rem; border-radius: 15px;">
+                                    <h4 style="color: #ff6666;">❌ מה איבדנו</h4>
+                                    <ul style="list-style: none; padding: 0;">
+                                        <li>• היצירתיות הוויזואלית</li>
+                                        <li>• התאמה אישית</li>
+                                        <li>• הקשר הרגשי למידע</li>
+                                        <li>• הייחודיות של כל מסר</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <p style="text-align: center; margin-top: 2rem; font-size: 1.3rem; color: #8338EC;">
+                                "קיבלנו יעילות, איבדנו קסם"
+                            </p>
                         </div>
-                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
-                            <h3 style="color: #8338EC;">💻 העידן הדיגיטלי</h3>
-                            <p>העברנו את הנייר למסכים</p>
-                            <p>חיפוש מהיר, אחסון אינסופי</p>
-                            <p style="color: #ffaa00;">⚠️ אבל המהות נשארה - עדיין מילים בשורות</p>
+
+                        <!-- Era 3 -->
+                        <div style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05)); padding: 3rem; border-radius: 25px; border: 2px solid rgba(0, 123, 255, 0.3);">
+                            <h2 style="color: #007BFF; font-size: 2rem; margin-bottom: 1.5rem;">💻 העידן הדיגיטלי</h2>
+                            <div style="text-align: center;">
+                                <p style="font-size: 1.3rem; margin-bottom: 2rem;">העברנו את הנייר למסכים... אבל המהות נשארה</p>
+                                <div style="display: flex; justify-content: center; gap: 3rem;">
+                                    <div>
+                                        <div style="font-size: 3rem;">📄</div>
+                                        <p>PDF</p>
+                                    </div>
+                                    <div style="font-size: 2rem; align-self: center;">➡️</div>
+                                    <div>
+                                        <div style="font-size: 3rem;">💻</div>
+                                        <p>מסמכים דיגיטליים</p>
+                                    </div>
+                                    <div style="font-size: 2rem; align-self: center;">=</div>
+                                    <div>
+                                        <div style="font-size: 3rem;">😴</div>
+                                        <p>עדיין משעמם</p>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 2rem; color: #ffaa00; font-size: 1.2rem;">
+                                    ⚠️ שינינו את הכלים, לא את הגישה
+                                </p>
+                            </div>
                         </div>
-                        <div style="background: rgba(138,43,226,0.1); padding: 2rem; border-radius: 20px;">
-                            <h3 style="color: #8338EC;">🤖 מהפכת ה-AI</h3>
-                            <p>החזרה ליצירתיות - עם כוח על!</p>
-                            <p>🎬 וידאו דינמי</p>
-                            <p>🎙️ פודקאסט חכם</p>
-                            <p>🎮 משחקים לימודיים</p>
-                            <p>🌟 חוויות אינטראקטיביות</p>
+
+                        <!-- Era 4 -->
+                        <div style="background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(6, 255, 165, 0.1)); padding: 3rem; border-radius: 25px; border: 2px solid rgba(138, 43, 226, 0.4);">
+                            <h2 style="color: #8338EC; font-size: 2rem; margin-bottom: 1.5rem; text-align: center;">🤖 מהפכת הבינה המלאכותית</h2>
+                            <p style="text-align: center; font-size: 1.5rem; margin-bottom: 2rem; color: #06FFA5;">
+                                החזרה ליצירתיות - אבל הפעם עם כוח על! 🚀
+                            </p>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+                                <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 15px;">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎬</div>
+                                    <h4>וידאו דינמי</h4>
+                                    <p>מסמכים שהופכים לסרטונים</p>
+                                </div>
+                                <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 15px;">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎙️</div>
+                                    <h4>פודקאסט חכם</h4>
+                                    <p>נתונים שהופכים לשיחות</p>
+                                </div>
+                                <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 15px;">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎮</div>
+                                    <h4>משחקים</h4>
+                                    <p>למידה דרך חוויה</p>
+                                </div>
+                                <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 15px;">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
+                                    <h4>אינטראקציה</h4>
+                                    <p>תוכן שמגיב למשתמש</p>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(138, 43, 226, 0.1); border-radius: 20px;">
+                        <p style="font-size: 1.8rem; color: #8338EC;">
+                            "המעגל המלא - חזרנו ליצירתיות, אבל הפעם עם בינה מלאכותית!"
+                        </p>
                     </div>
                 `
             },
             3: {
                 color: '#3A86FF',
+                rgb: '58, 134, 255',
                 title: 'הכלים שמשנים הכל',
                 content: `
-                    <h1 style="font-size: 3rem; margin-bottom: 2rem; color: #3A86FF;">4 כלים מהפכניים</h1>
-                    <div style="display: grid; gap: 2rem;">
-                        <div style="background: linear-gradient(135deg, rgba(255,0,110,0.1), rgba(255,0,110,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #FF006E;">
-                            <h2 style="color: #FF006E;">🎙️ NotebookLM</h2>
-                            <p style="font-size: 1.2rem;">הופך מסמכים לפודקאסטים מרתקים</p>
-                            <ul style="margin-top: 1rem;">
-                                <li>דוח של 80 עמודים → פודקאסט של 25 דקות</li>
-                                <li>שני מנחים וירטואליים מנתחים את התוכן</li>
-                                <li>נגישות מקסימלית למידע מורכב</li>
-                            </ul>
+                    <h1 style="font-size: 3.5rem; margin-bottom: 3rem; color: #3A86FF; text-align: center;">4 כלים מהפכניים</h1>
+                    
+                    <div style="text-align: center; margin-bottom: 3rem;">
+                        <p style="font-size: 1.5rem; line-height: 1.8;">
+                            טכנולוגיות שהופכות מידע יבש לחוויות מרתקות<br>
+                            כלים פשוטים שכל אחד יכול להשתמש בהם כבר היום
+                        </p>
+                    </div>
+
+                    <div class="tools-grid">
+                        <!-- NotebookLM -->
+                        <div class="tool-card" style="--tool-rgb: 255, 0, 110;">
+                            <h2 style="color: #FF006E; font-size: 2.5rem; margin-bottom: 1rem;">🎙️ NotebookLM</h2>
+                            <p style="font-size: 1.3rem; margin-bottom: 1.5rem;">הופך מסמכים לפודקאסטים מקצועיים</p>
+                            
+                            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem;">
+                                <h4 style="color: #FF006E; margin-bottom: 1rem;">איך זה עובד:</h4>
+                                <ol style="line-height: 1.8;">
+                                    <li>מעלים מסמך (PDF, Word, טקסט)</li>
+                                    <li>לוחצים על "Generate Audio"</li>
+                                    <li>ממתינים 5 דקות</li>
+                                    <li>מקבלים פודקאסט מקצועי!</li>
+                                </ol>
+                            </div>
+
+                            <div style="background: rgba(255, 0, 110, 0.1); padding: 1.5rem; border-radius: 15px;">
+                                <h4 style="color: #FF006E; margin-bottom: 1rem;">מקרי שימוש:</h4>
+                                <ul style="list-style: none; padding: 0;">
+                                    <li>✅ דוחות שנתיים → פודקאסטים לעובדים</li>
+                                    <li>✅ נהלים → סדרות הדרכה</li>
+                                    <li>✅ מחקרים → תוכן נגיש להנהלה</li>
+                                    <li>✅ פרוטוקולים → סיכומים נשמעים</li>
+                                </ul>
+                            </div>
+
+                            <p style="margin-top: 1.5rem; text-align: center; color: #FF006E; font-size: 1.2rem;">
+                                💡 <strong>טיפ:</strong> התחילו עם דוח קצר של 10 עמודים
+                            </p>
                         </div>
-                        <div style="background: linear-gradient(135deg, rgba(131,56,236,0.1), rgba(131,56,236,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #8338EC;">
-                            <h2 style="color: #8338EC;">📊 Flourish</h2>
-                            <p style="font-size: 1.2rem;">הופך נתונים לסיפורים ויזואליים</p>
-                            <ul style="margin-top: 1rem;">
-                                <li>ויזואליזציות אינטראקטיביות מרהיבות</li>
-                                <li>המשתמש יכול "לשחק" עם הנתונים</li>
-                                <li>תבניות מוכנות לכל סוג מידע</li>
-                            </ul>
+
+                        <!-- Flourish -->
+                        <div class="tool-card" style="--tool-rgb: 131, 56, 236;">
+                            <h2 style="color: #8338EC; font-size: 2.5rem; margin-bottom: 1rem;">📊 Flourish</h2>
+                            <p style="font-size: 1.3rem; margin-bottom: 1.5rem;">הופך נתונים לסיפורים ויזואליים</p>
+                            
+                            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem;">
+                                <h4 style="color: #8338EC; margin-bottom: 1rem;">יכולות מרכזיות:</h4>
+                                <ul style="line-height: 1.8;">
+                                    <li>🗺️ מפות חום אינטראקטיביות</li>
+                                    <li>📈 גרפים שמתעדכנים בזמן אמת</li>
+                                    <li>🎬 סיפורי נתונים עם אנימציות</li>
+                                    <li>🎯 דשבורדים אינטראקטיביים</li>
+                                </ul>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div style="background: rgba(255, 102, 102, 0.1); padding: 1rem; border-radius: 10px; text-align: center;">
+                                    <h5 style="color: #ff6666;">לפני</h5>
+                                    <p>טבלת Excel משעממת</p>
+                                </div>
+                                <div style="background: rgba(102, 255, 102, 0.1); padding: 1rem; border-radius: 10px; text-align: center;">
+                                    <h5 style="color: #66ff66;">אחרי</h5>
+                                    <p>ויזואליזציה מרהיבה</p>
+                                </div>
+                            </div>
+
+                            <p style="margin-top: 1.5rem; text-align: center; color: #8338EC; font-size: 1.2rem;">
+                                💡 <strong>טיפ:</strong> נסו את התבניות המוכנות קודם
+                            </p>
                         </div>
-                        <div style="background: linear-gradient(135deg, rgba(58,134,255,0.1), rgba(58,134,255,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #3A86FF;">
-                            <h2 style="color: #3A86FF;">🤖 Claude Artifacts</h2>
-                            <p style="font-size: 1.2rem;">יוצר תוכן אינטראקטיבי בזמן אמת</p>
-                            <ul style="margin-top: 1rem;">
-                                <li>סימולטורים להדרכה</li>
-                                <li>משחקי למידה מותאמים אישית</li>
-                                <li>כלי עבודה דינמיים</li>
-                            </ul>
+
+                        <!-- Claude Artifacts -->
+                        <div class="tool-card" style="--tool-rgb: 58, 134, 255;">
+                            <h2 style="color: #3A86FF; font-size: 2.5rem; margin-bottom: 1rem;">🤖 Claude Artifacts</h2>
+                            <p style="font-size: 1.3rem; margin-bottom: 1.5rem;">יוצר תוכן אינטראקטיבי בזמן אמת</p>
+                            
+                            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem;">
+                                <h4 style="color: #3A86FF; margin-bottom: 1rem;">מה אפשר ליצור:</h4>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                                    <div style="background: rgba(58, 134, 255, 0.1); padding: 1rem; border-radius: 10px;">
+                                        <strong>🎮 משחקים</strong><br>
+                                        טריוויה להכשרות
+                                    </div>
+                                    <div style="background: rgba(58, 134, 255, 0.1); padding: 1rem; border-radius: 10px;">
+                                        <strong>🔧 כלים</strong><br>
+                                        מחשבונים מותאמים
+                                    </div>
+                                    <div style="background: rgba(58, 134, 255, 0.1); padding: 1rem; border-radius: 10px;">
+                                        <strong>📱 אפליקציות</strong><br>
+                                        ממשקים דינמיים
+                                    </div>
+                                    <div style="background: rgba(58, 134, 255, 0.1); padding: 1rem; border-radius: 10px;">
+                                        <strong>🎨 הדגמות</strong><br>
+                                        סימולטורים חיים
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(58, 134, 255, 0.1); padding: 1.5rem; border-radius: 15px;">
+                                <p style="text-align: center; font-size: 1.3rem;">
+                                    "תאר מה אתה רוצה בעברית פשוטה -<br>
+                                    Claude יוצר את הכל תוך שניות!"
+                                </p>
+                            </div>
+
+                            <p style="margin-top: 1.5rem; text-align: center; color: #3A86FF; font-size: 1.2rem;">
+                                💡 <strong>טיפ:</strong> בקשו "צור לי משחק טריוויה על..."
+                            </p>
                         </div>
-                        <div style="background: linear-gradient(135deg, rgba(6,255,165,0.1), rgba(6,255,165,0.05)); padding: 2rem; border-radius: 20px; border: 2px solid #06FFA5;">
-                            <h2 style="color: #06FFA5;">🔍 GenSpark</h2>
-                            <p style="font-size: 1.2rem;">מנוע חיפוש שיוצר חוויות</p>
-                            <ul style="margin-top: 1rem;">
-                                <li>דפי נחיתה מיוחדים לכל חיפוש</li>
-                                <li>סיכום ויזואלי של כל המקורות</li>
-                                <li>קשרים וחיבורים בין נושאים</li>
-                            </ul>
+
+                        <!-- GenSpark -->
+                        <div class="tool-card" style="--tool-rgb: 6, 255, 165;">
+                            <h2 style="color: #06FFA5; font-size: 2.5rem; margin-bottom: 1rem;">🔍 GenSpark</h2>
+                            <p style="font-size: 1.3rem; margin-bottom: 1.5rem;">מנוע חיפוש שיוצר חוויות</p>
+                            
+                            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem;">
+                                <h4 style="color: #06FFA5; margin-bottom: 1rem;">מה מיוחד בו:</h4>
+                                <ul style="line-height: 1.8;">
+                                    <li>📄 דף מאוחד עם כל המידע</li>
+                                    <li>🎨 עיצוב ויזואלי אוטומטי</li>
+                                    <li>🔗 קישורים בין נושאים</li>
+                                    <li>⏰ ציר זמן של התפתחויות</li>
+                                </ul>
+                            </div>
+
+                            <div style="background: linear-gradient(135deg, rgba(6, 255, 165, 0.1), rgba(6, 255, 165, 0.05)); padding: 1.5rem; border-radius: 15px;">
+                                <h4 style="color: #06FFA5; margin-bottom: 1rem;">השוואה מהירה:</h4>
+                                <p><strong>Google:</strong> 10 קישורים כחולים 😴</p>
+                                <p><strong>GenSpark:</strong> חוויה ויזואלית מלאה! 🎉</p>
+                            </div>
+
+                            <p style="margin-top: 1.5rem; text-align: center; color: #06FFA5; font-size: 1.2rem;">
+                                💡 <strong>טיפ:</strong> חפשו נושאים מורכבים עם הרבה היבטים
+                            </p>
                         </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(58, 134, 255, 0.1); border-radius: 20px;">
+                        <p style="font-size: 1.5rem; color: #3A86FF;">
+                            🎉 כל הכלים האלה זמינים כבר היום - רובם בחינם!
+                        </p>
                     </div>
                 `
             },
             4: {
                 color: '#06FFA5',
-                title: 'החזרה למעגל המלא',
+                rgb: '6, 255, 165',
+                title: 'הזמן שלכם לזרוח',
                 content: `
-                    <h1 style="font-size: 3rem; margin-bottom: 2rem; background: linear-gradient(135deg, #06FFA5 0%, #FFB700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">הזמן שלכם לזרוח</h1>
-                    <div style="text-align: center; margin-bottom: 3rem;">
-                        <p style="font-size: 1.5rem; line-height: 1.8;">
+                    <h1 style="font-size: 4rem; margin-bottom: 3rem; background: linear-gradient(135deg, #06FFA5 0%, #FFB700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center;">הזמן שלכם לזרוח</h1>
+                    
+                    <div style="text-align: center; margin-bottom: 4rem;">
+                        <p style="font-size: 1.8rem; line-height: 1.8;">
                             כמו האינקים עם הקיפו שלהם, כמו המצרים עם החרתומים -<br>
                             עכשיו גם אנחנו יכולים להפוך מידע לחוויה, לסיפור, לדבר חי.
                         </p>
                     </div>
+
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 3rem;">
-                        <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; text-align: center;">
-                            <h2 style="color: #FF006E; font-size: 3rem;">1</h2>
-                            <h3 style="color: #FF006E;">חקרו</h3>
-                            <p>נסו את הכלים<br>התחילו קטן<br>למדו מהניסיון</p>
+                        <div style="background: linear-gradient(135deg, rgba(255, 0, 110, 0.1), rgba(255, 0, 110, 0.05)); padding: 3rem; border-radius: 25px; text-align: center; border: 3px solid #FF006E;">
+                            <h2 style="color: #FF006E; font-size: 4rem; margin-bottom: 1rem;">1</h2>
+                            <h3 style="color: #FF006E; font-size: 2rem; margin-bottom: 1rem;">חקרו</h3>
+                            <ul style="list-style: none; padding: 0; font-size: 1.2rem; line-height: 2;">
+                                <li>🔍 נסו NotebookLM עם דוח אחד</li>
+                                <li>🎨 שחקו עם Flourish</li>
+                                <li>🤖 בקשו מClaude משהו פשוט</li>
+                                <li>🌟 התחילו קטן וצמחו</li>
+                            </ul>
                         </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; text-align: center;">
-                            <h2 style="color: #8338EC; font-size: 3rem;">2</h2>
-                            <h3 style="color: #8338EC;">יישמו</h3>
-                            <p>בחרו פרויקט<br>הפכו תוכן קיים<br>הראו תוצאות</p>
+                        
+                        <div style="background: linear-gradient(135deg, rgba(131, 56, 236, 0.1), rgba(131, 56, 236, 0.05)); padding: 3rem; border-radius: 25px; text-align: center; border: 3px solid #8338EC;">
+                            <h2 style="color: #8338EC; font-size: 4rem; margin-bottom: 1rem;">2</h2>
+                            <h3 style="color: #8338EC; font-size: 2rem; margin-bottom: 1rem;">יישמו</h3>
+                            <ul style="list-style: none; padding: 0; font-size: 1.2rem; line-height: 2;">
+                                <li>📋 בחרו פרויקט פיילוט</li>
+                                <li>🔄 הפכו תוכן קיים</li>
+                                <li>📊 מדדו את ההשפעה</li>
+                                <li>🎯 הראו תוצאות</li>
+                            </ul>
                         </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; text-align: center;">
-                            <h2 style="color: #06FFA5; font-size: 3rem;">3</h2>
-                            <h3 style="color: #06FFA5;">הובילו</h3>
-                            <p>חלקו תובנות<br>הציעו חדשנות<br>הפכו לנציגי השינוי</p>
+                        
+                        <div style="background: linear-gradient(135deg, rgba(6, 255, 165, 0.1), rgba(6, 255, 165, 0.05)); padding: 3rem; border-radius: 25px; text-align: center; border: 3px solid #06FFA5;">
+                            <h2 style="color: #06FFA5; font-size: 4rem; margin-bottom: 1rem;">3</h2>
+                            <h3 style="color: #06FFA5; font-size: 2rem; margin-bottom: 1rem;">הובילו</h3>
+                            <ul style="list-style: none; padding: 0; font-size: 1.2rem; line-height: 2;">
+                                <li>🌟 חלקו את הסיפור</li>
+                                <li>🚀 הציעו הרחבה</li>
+                                <li>👥 בנו קהילה</li>
+                                <li>💡 הפכו לנציגי השינוי</li>
+                            </ul>
                         </div>
                     </div>
-                    <div style="text-align: center; padding: 3rem; background: rgba(6,255,165,0.1); border-radius: 30px;">
-                        <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: #06FFA5;">
-                            ״המידע תמיד היה כוח.<br>
-                            עכשיו יש לנו את הכוח להפוך אותו לכל דבר שנחלום עליו.״
+
+                    <div style="background: linear-gradient(135deg, rgba(6, 255, 165, 0.1), rgba(255, 183, 0, 0.1)); padding: 4rem; border-radius: 30px; text-align: center; margin-bottom: 3rem;">
+                        <h2 style="font-size: 3rem; margin-bottom: 2rem; color: #06FFA5;">
+                            ״המידע תמיד היה כוח.״
                         </h2>
-                        <p style="font-size: 2rem; color: #FFB700; font-weight: bold;">
+                        <p style="font-size: 2rem; line-height: 1.6; margin-bottom: 2rem;">
+                            עכשיו, בפעם הראשונה בהיסטוריה,<br>
+                            יש לנו את הכוח להפוך אותו<br>
+                            <strong style="color: #FFB700;">לכל דבר שנחלום עליו.</strong>
+                        </p>
+                        <p style="font-size: 3rem; color: #FFB700; font-weight: bold; margin-top: 3rem;">
                             מה תבחרו ליצור? 🚀
                         </p>
+                    </div>
+
+                    <div style="background: rgba(138, 43, 226, 0.1); padding: 3rem; border-radius: 25px; margin-bottom: 3rem;">
+                        <h3 style="color: #8338EC; font-size: 2rem; margin-bottom: 2rem; text-align: center;">המסר האישי שלי אליכם</h3>
+                        <p style="font-size: 1.3rem; line-height: 1.8; text-align: center;">
+                            כמידענים ואנשי מידע, אתם עומדים בנקודת מפנה היסטורית.<br>
+                            אתם כבר לא רק שומרי מידע - אתם <strong>אדריכלי חוויות מידע</strong>.<br>
+                            הזמן להפסיק לעקוב אחרי טרנדים ולהתחיל <strong>ליצור אותם</strong>.<br>
+                            הארגונים שלכם זקוקים לכם יותר מתמיד.
+                        </p>
+                    </div>
+
+                    <div class="contact-section">
+                        <a href="https://www.youtube.com/@HenryAI" target="_blank" class="contact-link">
+                            🎥 ערוץ YouTube שלי
+                        </a>
+                        <a href="#" class="contact-link">
+                            📱 קבוצת WhatsApp
+                        </a>
+                        <a href="#" class="contact-link">
+                            🎓 סדנאות מתקדמות
+                        </a>
+                        <a href="mailto:henry@example.com" class="contact-link">
+                            ✉️ יצירת קשר
+                        </a>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 3rem; font-size: 2rem;">
+                        <p>תודה! 🙏</p>
                     </div>
                 `
             }
@@ -562,8 +1254,14 @@
 
         // Initialize canvas position
         function initCanvas() {
+            createParticles();
             navigateToIsland(1);
             updateMinimap();
+            
+            // Hide loading overlay
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 1500);
         }
 
         // Navigate to specific island
@@ -572,7 +1270,6 @@
             
             currentIsland = islandNum;
             const island = document.getElementById(`island${islandNum}`);
-            const rect = island.getBoundingClientRect();
             const canvas = document.getElementById('canvas');
             
             // Calculate center position (adjusted for RTL)
@@ -580,12 +1277,18 @@
             const targetY = -island.offsetTop + window.innerHeight / 2 - island.offsetHeight / 2;
             
             canvas.style.transform = `translate(${targetX}px, ${targetY}px)`;
+            canvasPosition = { x: targetX, y: targetY };
             
             // Update active state
             document.querySelectorAll('.island').forEach(i => i.classList.remove('active'));
             island.classList.add('active');
             
-            // Update progress bar (RTL - width represents progress from right)
+            // Update minimap islands
+            document.querySelectorAll('.minimap-island').forEach((i, index) => {
+                i.classList.toggle('active', index + 1 === islandNum);
+            });
+            
+            // Update progress bar
             const progress = (currentIsland / totalIslands) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
             
@@ -596,22 +1299,16 @@
         function updateMinimap() {
             const canvas = document.getElementById('canvas');
             const viewport = document.getElementById('minimapViewport');
-            const transform = canvas.style.transform;
-            const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
+            const transform = canvasPosition || { x: 0, y: 0 };
             
-            if (match) {
-                const x = parseFloat(match[1]);
-                const y = parseFloat(match[2]);
-                
-                // Scale down for minimap (RTL adjusted)
-                const minimapX = Math.abs(x) / 25;
-                const minimapY = Math.abs(y) / 25;
-                
-                viewport.style.right = minimapX + 'px';
-                viewport.style.top = minimapY + 'px';
-                viewport.style.width = (window.innerWidth / 25) + 'px';
-                viewport.style.height = (window.innerHeight / 25) + 'px';
-            }
+            // Scale down for minimap
+            const minimapX = Math.abs(transform.x) / 32;
+            const minimapY = Math.abs(transform.y) / 30;
+            
+            viewport.style.right = minimapX + 'px';
+            viewport.style.top = minimapY + 'px';
+            viewport.style.width = (window.innerWidth / 32) + 'px';
+            viewport.style.height = (window.innerHeight / 30) + 'px';
         }
 
         // Open fullscreen modal
@@ -622,8 +1319,12 @@
             const content = islandFullContent[islandNum];
             
             modalContent.style.setProperty('--modal-color', content.color);
+            modalContent.style.setProperty('--modal-rgb', content.rgb);
             modalBody.innerHTML = content.content;
             modal.classList.add('active');
+            
+            // Scroll to top
+            modalContent.scrollTop = 0;
         }
 
         // Close fullscreen modal
@@ -634,17 +1335,55 @@
 
         // Toggle auto-play
         function toggleAutoPlay() {
+            const btn = document.getElementById('autoPlayBtn');
             if (autoPlayInterval) {
                 clearInterval(autoPlayInterval);
                 autoPlayInterval = null;
-                document.querySelector('.nav-btn:nth-child(2)').textContent = '▶ הפעל';
+                btn.textContent = '▶ הפעל אוטומטית';
             } else {
                 autoPlayInterval = setInterval(() => {
                     const nextIsland = currentIsland === totalIslands ? 1 : currentIsland + 1;
                     navigateToIsland(nextIsland);
-                }, 8000);
-                document.querySelector('.nav-btn:nth-child(2)').textContent = '⏸ השהה';
+                }, 10000); // 10 seconds per island
+                btn.textContent = '⏸ השהה';
             }
+        }
+
+        // Drag functionality
+        function startDrag(e) {
+            if (e.target.closest('.island') || e.target.closest('.nav-controls') || e.target.closest('.instructions')) return;
+            
+            isDragging = true;
+            dragStart = {
+                x: e.clientX || e.touches[0].clientX,
+                y: e.clientY || e.touches[0].clientY
+            };
+            document.body.style.cursor = 'grabbing';
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            const deltaX = clientX - dragStart.x;
+            const deltaY = clientY - dragStart.y;
+            
+            const canvas = document.getElementById('canvas');
+            canvasPosition.x += deltaX;
+            canvasPosition.y += deltaY;
+            
+            canvas.style.transform = `translate(${canvasPosition.x}px, ${canvasPosition.y}px)`;
+            
+            dragStart = { x: clientX, y: clientY };
+            updateMinimap();
+        }
+
+        function endDrag() {
+            isDragging = false;
+            document.body.style.cursor = 'default';
         }
 
         // Event listeners
@@ -654,18 +1393,28 @@
             // Island click handlers
             document.querySelectorAll('.island').forEach(island => {
                 island.addEventListener('click', (e) => {
-                    const islandNum = parseInt(island.dataset.island);
-                    openFullscreen(islandNum);
+                    if (!isDragging) {
+                        const islandNum = parseInt(island.dataset.island);
+                        openFullscreen(islandNum);
+                    }
                 });
             });
             
-            // Keyboard navigation (RTL adjusted)
+            // Drag handlers
+            document.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchstart', startDrag);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('touchend', endDrag);
+            
+            // Keyboard navigation
             document.addEventListener('keydown', (e) => {
                 switch(e.key) {
-                    case 'ArrowRight': // Right arrow = previous (RTL)
+                    case 'ArrowRight': // Right = previous (RTL)
                         navigateToIsland(currentIsland > 1 ? currentIsland - 1 : totalIslands);
                         break;
-                    case 'ArrowLeft': // Left arrow = next (RTL)
+                    case 'ArrowLeft': // Left = next (RTL)
                         navigateToIsland(currentIsland < totalIslands ? currentIsland + 1 : 1);
                         break;
                     case '1':
@@ -699,34 +1448,17 @@
                 }
             });
             
-            // Touch support for mobile
-            let touchStartX = 0;
-            let touchStartY = 0;
-            
-            document.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            });
-            
-            document.addEventListener('touchend', (e) => {
-                const touchEndX = e.changedTouches[0].clientX;
-                const deltaX = touchEndX - touchStartX;
-                
-                // Swipe detection (RTL adjusted)
-                if (Math.abs(deltaX) > 50) {
-                    if (deltaX > 0) {
-                        // Swipe right = previous (RTL)
-                        navigateToIsland(currentIsland > 1 ? currentIsland - 1 : totalIslands);
-                    } else {
-                        // Swipe left = next (RTL)
-                        navigateToIsland(currentIsland < totalIslands ? currentIsland + 1 : 1);
-                    }
-                }
-            });
-            
             // Window resize handler
             window.addEventListener('resize', () => {
                 navigateToIsland(currentIsland);
+            });
+            
+            // Mouse wheel zoom (optional)
+            document.addEventListener('wheel', (e) => {
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    // Add zoom functionality here if needed
+                }
             });
         });
     </script>
